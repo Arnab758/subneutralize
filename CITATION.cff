@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use SubNeutralize in your research or production systems, please cite it as below."
+authors:
+  - family-names: "Dutta"
+    given-names: "Arnab"
+    orcid: "https://orcid.org/0009-0000-0000-0000"
+title: "SubNeutralize: The Geometry of Reasoning and the Elimination of the Overthinking Trap"
+version: 1.0.0
+doi: 10.5281/zenodo.22941619
+date-released: 2026-09-24
+url: "https://github.com/Arnab758/subneutralize"
+repository-code: "https://github.com/Arnab758/subneutralize"
+keywords:
+  - reasoning models
+  - overthinking
+  - test-time compute
+  - inference governor
+  - transformer dynamics
+  - riemannian geometry
+  - deepseek-r1
+license: AGPL-3.0

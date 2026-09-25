@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "subneutralize"
+version = "1.0.0"
+authors = [
+    { name = "Arnab Dutta" }
+]
+description = "SubNeutralize: A Parameter-Free Runtime Governor for Autoregressive Reasoning Models"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "AGPL-3.0" }
+keywords = [
+    "deep-learning",
+    "reasoning-models",
+    "transformers",
+    "overthinking",
+    "inference-governor",
+    "riemannian-geometry",
+    "deepseek-r1"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12"
+]
+dependencies = [
+    "torch>=2.0.0",
+    "transformers>=4.40.0",
+    "numpy>=1.22.0",
+    "scipy>=1.8.0",
+    "accelerate>=0.28.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0"
+]
+
+[project.scripts]
+subneutralize = "subneutralize.cli:main"
+
+[project.urls]
+"Homepage" = "https://github.com/Arnab758/subneutralize"
+"Bug Tracker" = "https://github.com/Arnab758/subneutralize/issues"
+"DOI" = "https://doi.org/10.5281/zenodo.22941619"
