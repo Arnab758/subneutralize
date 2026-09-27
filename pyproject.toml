@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "subneutralize"
+version = "0.1.0"
+description = "Universal Parameter-Free Runtime Inference Governor for Autoregressive Reasoning Models"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Arnab Dutta" }
+]
+keywords = [
+    "deepseek",
+    "reasoning",
+    "inference-optimization",
+    "vllm",
+    "test-time-compute",
+    "mechanistic-interpretability",
+    "overthinking"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=2.0.0",
+    "transformers>=4.40.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/arnabdutta-ai/subneutralize"
+"Bug Tracker" = "https://github.com/arnabdutta-ai/subneutralize/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["subneutralize*"]

@@ -1,0 +1,31 @@
+{
+  "benchmark": "Multi-Layer Consensus Trajectory Governor (Addressing Layer-Sparsity)",
+  "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "hardware": "NVIDIA A100-SXM4-40GB",
+  "date": "2026-09-22",
+  "num_problems": 10,
+  "layer_band": [12, 14, 16],
+  "velocity_threshold": 0.06,
+  "consensus_operator": "v_consensus = max(v_12, v_14, v_16)",
+  "summary": {
+    "vanilla_accuracy_pct": 10.0,
+    "vanilla_correct": 1,
+    "consensus_gov_accuracy_pct": 30.0,
+    "consensus_gov_correct": 3,
+    "accuracy_multiplier": "3.0x",
+    "flips_prevented": 3,
+    "net_compute_reduction_pct": 26.1
+  },
+  "problems": [
+    {"idx": 1, "vanilla": {"tokens": 450, "sec": 16.7, "correct": false}, "governor": {"tokens": 345, "sec": 12.7, "correct": true}, "outcome": "GOV_WON (Flip Prevented!)", "saved_pct": 23.3},
+    {"idx": 2, "vanilla": {"tokens": 450, "sec": 16.2, "correct": false}, "governor": {"tokens": 414, "sec": 15.3, "correct": true}, "outcome": "GOV_WON (Flip Prevented!)", "saved_pct": 8.0},
+    {"idx": 3, "vanilla": {"tokens": 450, "sec": 16.5, "correct": false}, "governor": {"tokens": 202, "sec": 7.3, "correct": false}, "outcome": "BOTH_FAIL", "saved_pct": 55.1},
+    {"idx": 4, "vanilla": {"tokens": 450, "sec": 16.3, "correct": false}, "governor": {"tokens": 348, "sec": 12.7, "correct": true}, "outcome": "GOV_WON (Flip Prevented!)", "saved_pct": 22.7},
+    {"idx": 5, "vanilla": {"tokens": 450, "sec": 16.5, "correct": false}, "governor": {"tokens": 442, "sec": 16.5, "correct": false}, "outcome": "BOTH_FAIL", "saved_pct": 1.8},
+    {"idx": 6, "vanilla": {"tokens": 450, "sec": 16.4, "correct": true}, "governor": {"tokens": 195, "sec": 7.1, "correct": false}, "outcome": "VAN_WON", "saved_pct": 56.7},
+    {"idx": 7, "vanilla": {"tokens": 450, "sec": 16.3, "correct": false}, "governor": {"tokens": 450, "sec": 16.4, "correct": false}, "outcome": "BOTH_FAIL", "saved_pct": 0.0},
+    {"idx": 8, "vanilla": {"tokens": 450, "sec": 16.2, "correct": false}, "governor": {"tokens": 323, "sec": 11.8, "correct": false}, "outcome": "BOTH_FAIL", "saved_pct": 28.2},
+    {"idx": 9, "vanilla": {"tokens": 450, "sec": 16.6, "correct": false}, "governor": {"tokens": 158, "sec": 5.9, "correct": false}, "outcome": "BOTH_FAIL", "saved_pct": 64.9},
+    {"idx": 10, "vanilla": {"tokens": 450, "sec": 16.5, "correct": false}, "governor": {"tokens": 450, "sec": 16.8, "correct": false}, "outcome": "BOTH_FAIL", "saved_pct": 0.0}
+  ]
+}

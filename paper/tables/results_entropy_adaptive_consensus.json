@@ -1,0 +1,90 @@
+{
+  "experiment": "Proper Entropy-Adaptive Multi-Layer Consensus Governor",
+  "hardware": "NVIDIA A100-SXM4-40GB GPU",
+  "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "dataset": "openai/gsm8k",
+  "num_problems": 10,
+  "reasoning_band": [12, 14, 16],
+  "governing_law": "epsilon(H_t) = clamp(0.06 * (H_t / 1.2), 0.025, 0.090)",
+  "metrics": {
+    "vanilla_accuracy": 30.0,
+    "adaptive_governor_accuracy": 50.0,
+    "accuracy_delta": 20.0,
+    "flips_prevented": 2,
+    "vanilla_losses": 0,
+    "net_compute_reduction_pct": 27.9,
+    "tokens_saved": 1084
+  },
+  "per_problem_results": [
+    {
+      "idx": 1,
+      "vanilla": { "tokens": 450, "time_s": 17.1, "correct": false },
+      "governor": { "tokens": 150, "time_s": 5.5, "correct": true },
+      "tokens_saved_pct": 66.7,
+      "outcome": "GOV_WON (Flip Prevented!)"
+    },
+    {
+      "idx": 2,
+      "vanilla": { "tokens": 223, "time_s": 7.8, "correct": true },
+      "governor": { "tokens": 450, "time_s": 16.2, "correct": true },
+      "tokens_saved_pct": -101.8,
+      "outcome": "EQUAL"
+    },
+    {
+      "idx": 3,
+      "vanilla": { "tokens": 450, "time_s": 15.8, "correct": false },
+      "governor": { "tokens": 160, "time_s": 5.7, "correct": false },
+      "tokens_saved_pct": 64.4,
+      "outcome": "BOTH_FAIL"
+    },
+    {
+      "idx": 4,
+      "vanilla": { "tokens": 264, "time_s": 9.1, "correct": false },
+      "governor": { "tokens": 450, "time_s": 16.2, "correct": true },
+      "tokens_saved_pct": -70.5,
+      "outcome": "GOV_WON (Flip Prevented!)"
+    },
+    {
+      "idx": 5,
+      "vanilla": { "tokens": 450, "time_s": 15.9, "correct": true },
+      "governor": { "tokens": 450, "time_s": 16.3, "correct": true },
+      "tokens_saved_pct": 0.0,
+      "outcome": "EQUAL"
+    },
+    {
+      "idx": 6,
+      "vanilla": { "tokens": 300, "time_s": 10.5, "correct": false },
+      "governor": { "tokens": 205, "time_s": 7.4, "correct": false },
+      "tokens_saved_pct": 31.7,
+      "outcome": "BOTH_FAIL"
+    },
+    {
+      "idx": 7,
+      "vanilla": { "tokens": 392, "time_s": 13.5, "correct": true },
+      "governor": { "tokens": 110, "time_s": 3.9, "correct": true },
+      "tokens_saved_pct": 71.9,
+      "outcome": "EQUAL"
+    },
+    {
+      "idx": 8,
+      "vanilla": { "tokens": 450, "time_s": 15.6, "correct": false },
+      "governor": { "tokens": 220, "time_s": 7.9, "correct": false },
+      "tokens_saved_pct": 51.1,
+      "outcome": "BOTH_FAIL"
+    },
+    {
+      "idx": 9,
+      "vanilla": { "tokens": 450, "time_s": 15.7, "correct": false },
+      "governor": { "tokens": 450, "time_s": 16.3, "correct": false },
+      "tokens_saved_pct": 0.0,
+      "outcome": "BOTH_FAIL"
+    },
+    {
+      "idx": 10,
+      "vanilla": { "tokens": 450, "time_s": 15.7, "correct": false },
+      "governor": { "tokens": 150, "time_s": 5.4, "correct": false },
+      "tokens_saved_pct": 66.7,
+      "outcome": "BOTH_FAIL"
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "benchmark_name": "SUBNEUTRALIZE 32B UNSEEN ENTERPRISE BENCHMARK",
+  "hardware": "NVIDIA A100-SXM4-40GB",
+  "model": "unsloth/DeepSeek-R1-Distill-Qwen-32B-unsloth-bnb-4bit",
+  "mode": "Universal Dynamical Consensus (Zero External Scissoring, 1500 Max Token Ceiling for Both)",
+  "problems": [
+    {
+      "id": "PROB-01",
+      "title": "SQL Injection Sanitizer & Query Builder",
+      "vanilla_tokens": 1500,
+      "vanilla_latency_s": 156.2,
+      "subneutralize_think_tokens": 87,
+      "subneutralize_code_tokens": 148,
+      "subneutralize_total_tokens": 235,
+      "subneutralize_latency_s": 24.6,
+      "token_savings_pct": 84.3,
+      "latency_savings_pct": 84.2,
+      "test_result": "PASS"
+    },
+    {
+      "id": "PROB-02",
+      "title": "Token Bucket Rate Limiter with Refill",
+      "vanilla_tokens": 1500,
+      "vanilla_latency_s": 157.0,
+      "subneutralize_think_tokens": 125,
+      "subneutralize_code_tokens": 218,
+      "subneutralize_total_tokens": 343,
+      "subneutralize_latency_s": 35.9,
+      "token_savings_pct": 77.1,
+      "latency_savings_pct": 77.1,
+      "test_result": "PASS"
+    },
+    {
+      "id": "PROB-03",
+      "title": "JWT Claims & Expiry Validator",
+      "vanilla_tokens": 1198,
+      "vanilla_latency_s": 125.3,
+      "subneutralize_think_tokens": 92,
+      "subneutralize_code_tokens": 136,
+      "subneutralize_total_tokens": 228,
+      "subneutralize_latency_s": 23.8,
+      "token_savings_pct": 81.0,
+      "latency_savings_pct": 81.0,
+      "test_result": "PASS"
+    },
+    {
+      "id": "PROB-04",
+      "title": "LRU Cache with Time-To-Live (TTL)",
+      "vanilla_tokens": 1500,
+      "vanilla_latency_s": 157.6,
+      "subneutralize_think_tokens": 101,
+      "subneutralize_code_tokens": 354,
+      "subneutralize_total_tokens": 455,
+      "subneutralize_latency_s": 47.9,
+      "token_savings_pct": 69.7,
+      "latency_savings_pct": 69.6,
+      "test_result": "PASS"
+    }
+  ],
+  "aggregate_metrics": {
+    "total_vanilla_tokens": 5698,
+    "total_subneutralize_tokens": 1261,
+    "total_vanilla_latency_s": 596.1,
+    "total_subneutralize_latency_s": 132.3,
+    "average_tokens_vanilla": 1424.5,
+    "average_tokens_subneutralize": 315.2,
+    "net_compute_reduction_pct": 77.9,
+    "net_latency_reduction_pct": 77.8,
+    "pass_rate": "4/4 (100.0%)",
+    "speedup_factor": 4.51
+  },
+  "enterprise_roi_per_1m_queries": {
+    "vanilla_cost_usd": 3800.0,
+    "subneutralize_cost_usd": 841.0,
+    "monthly_savings_usd": 2959.0,
+    "savings_pct": 77.9
+  }
+}

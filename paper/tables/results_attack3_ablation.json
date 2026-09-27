@@ -1,0 +1,60 @@
+{
+  "experiment": "Task 3 Defense: 5-Arm Governor Ablation (Refuting Reviewer Attack #3)",
+  "reviewer_defense": "Refutation of Reviewer Attack #3 ('Is it just naive early stopping or fixed token truncation?')",
+  "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "hardware": "NVIDIA A100-SXM4-40GB",
+  "dataset": "openai/gsm8k",
+  "date": "2026-09-22",
+  "num_problems": 10,
+  "summary_metrics": {
+    "Vanilla": {
+      "accuracy_pct": 30.0,
+      "correct": 3,
+      "total_tokens": 3927,
+      "avg_tokens": 392.7
+    },
+    "Fixed-180": {
+      "accuracy_pct": 20.0,
+      "correct": 2,
+      "total_tokens": 1800,
+      "avg_tokens": 180.0,
+      "finding": "Static truncation prematurely truncates multi-step problems, collapsing accuracy to 20%."
+    },
+    "Linguistic": {
+      "accuracy_pct": 40.0,
+      "correct": 4,
+      "total_tokens": 2687,
+      "avg_tokens": 268.7,
+      "finding": "Naive keyword detection ('Wait') fires prematurely during exploratory deduction (e.g. Problems 6 and 10)."
+    },
+    "Pure Latent Velocity": {
+      "accuracy_pct": 60.0,
+      "correct": 6,
+      "total_tokens": 3995,
+      "avg_tokens": 399.5,
+      "finding": "Zero text checks. Pure cosine velocity monitoring v_t < 0.06 at Layer 14 doubles Vanilla accuracy (30% -> 60%)."
+    },
+    "Coupled SubNeutralize": {
+      "accuracy_pct": 50.0,
+      "correct": 5,
+      "total_tokens": 2365,
+      "avg_tokens": 236.5,
+      "tokens_saved": 1562,
+      "compute_reduction_pct": 39.78,
+      "accuracy_gain_pct": 20.0,
+      "finding": "Coupling latent velocity with hesitation gating provides Pareto-optimal balance: +20% accuracy leap and 39.8% compute reduction."
+    }
+  },
+  "per_problem_results": [
+    {"idx": 1, "vanilla": {"tk": 450, "ok": false}, "fixed_180": {"tk": 180, "ok": false}, "linguistic": {"tk": 362, "ok": true}, "pure_latent": {"tk": 450, "ok": true}, "coupled": {"tk": 362, "ok": true}, "gt": "18"},
+    {"idx": 2, "vanilla": {"tk": 283, "ok": true}, "fixed_180": {"tk": 180, "ok": true}, "linguistic": {"tk": 217, "ok": true}, "pure_latent": {"tk": 267, "ok": true}, "coupled": {"tk": 120, "ok": true}, "gt": "3"},
+    {"idx": 3, "vanilla": {"tk": 450, "ok": false}, "fixed_180": {"tk": 180, "ok": false}, "linguistic": {"tk": 140, "ok": false}, "pure_latent": {"tk": 333, "ok": false}, "coupled": {"tk": 145, "ok": false}, "gt": "70000"},
+    {"idx": 4, "vanilla": {"tk": 271, "ok": false}, "fixed_180": {"tk": 180, "ok": false}, "linguistic": {"tk": 257, "ok": false}, "pure_latent": {"tk": 277, "ok": false}, "coupled": {"tk": 289, "ok": false}, "gt": "540"},
+    {"idx": 5, "vanilla": {"tk": 450, "ok": false}, "fixed_180": {"tk": 180, "ok": true}, "linguistic": {"tk": 400, "ok": true}, "pure_latent": {"tk": 450, "ok": true}, "coupled": {"tk": 130, "ok": false}, "gt": "20"},
+    {"idx": 6, "vanilla": {"tk": 344, "ok": true}, "fixed_180": {"tk": 180, "ok": false}, "linguistic": {"tk": 151, "ok": false}, "pure_latent": {"tk": 444, "ok": true}, "coupled": {"tk": 378, "ok": true}, "gt": "64"},
+    {"idx": 7, "vanilla": {"tk": 329, "ok": true}, "fixed_180": {"tk": 180, "ok": false}, "linguistic": {"tk": 362, "ok": true}, "pure_latent": {"tk": 450, "ok": true}, "coupled": {"tk": 137, "ok": true}, "gt": "260"},
+    {"idx": 8, "vanilla": {"tk": 450, "ok": false}, "fixed_180": {"tk": 180, "ok": false}, "linguistic": {"tk": 208, "ok": false}, "pure_latent": {"tk": 450, "ok": false}, "coupled": {"tk": 215, "ok": false}, "gt": "160"},
+    {"idx": 9, "vanilla": {"tk": 450, "ok": false}, "fixed_180": {"tk": 180, "ok": false}, "linguistic": {"tk": 450, "ok": false}, "pure_latent": {"tk": 450, "ok": false}, "coupled": {"tk": 376, "ok": false}, "gt": "45"},
+    {"idx": 10, "vanilla": {"tk": 450, "ok": false}, "fixed_180": {"tk": 180, "ok": false}, "linguistic": {"tk": 140, "ok": false}, "pure_latent": {"tk": 424, "ok": true}, "coupled": {"tk": 213, "ok": true}, "gt": "460"}
+  ]
+}

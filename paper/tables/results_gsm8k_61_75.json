@@ -1,0 +1,33 @@
+{
+  "benchmark": "openai/gsm8k",
+  "slice": "test[60:75]",
+  "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "total_problems": 15,
+  "vanilla_tokens": 5816,
+  "governor_tokens": 2848,
+  "net_savings_pct": 51.0,
+  "vanilla_accuracy": 60.0,
+  "governor_accuracy": 80.0,
+  "accuracy_delta": 20.0,
+  "flips_prevented": 5,
+  "losses_against_vanilla": 2,
+  "equal_outcomes": 7,
+  "both_fail": 1,
+  "records": [
+    {"idx": 61, "vanilla_tokens": 450, "vanilla_time": 15.8, "vanilla_res": "X", "gov_tokens": 146, "gov_time": 4.8, "gov_res": "OK", "saved_pct": 67.6, "outcome": "GOV_WON"},
+    {"idx": 62, "vanilla_tokens": 366, "vanilla_time": 12.4, "vanilla_res": "OK", "gov_tokens": 132, "gov_time": 4.4, "gov_res": "X", "saved_pct": 63.9, "outcome": "VAN_WON"},
+    {"idx": 63, "vanilla_tokens": 450, "vanilla_time": 15.1, "vanilla_res": "X", "gov_tokens": 164, "gov_time": 5.4, "gov_res": "X", "saved_pct": 63.6, "outcome": "BOTH_FAIL"},
+    {"idx": 64, "vanilla_tokens": 450, "vanilla_time": 15.2, "vanilla_res": "X", "gov_tokens": 237, "gov_time": 8.0, "gov_res": "OK", "saved_pct": 47.3, "outcome": "GOV_WON"},
+    {"idx": 65, "vanilla_tokens": 318, "vanilla_time": 10.6, "vanilla_res": "OK", "gov_tokens": 120, "gov_time": 4.0, "gov_res": "OK", "saved_pct": 62.3, "outcome": "EQUAL"},
+    {"idx": 66, "vanilla_tokens": 369, "vanilla_time": 12.3, "vanilla_res": "OK", "gov_tokens": 312, "gov_time": 10.4, "gov_res": "OK", "saved_pct": 15.4, "outcome": "EQUAL"},
+    {"idx": 67, "vanilla_tokens": 398, "vanilla_time": 13.3, "vanilla_res": "OK", "gov_tokens": 171, "gov_time": 5.8, "gov_res": "X", "saved_pct": 57.0, "outcome": "VAN_WON"},
+    {"idx": 68, "vanilla_tokens": 342, "vanilla_time": 11.5, "vanilla_res": "X", "gov_tokens": 152, "gov_time": 5.1, "gov_res": "OK", "saved_pct": 55.6, "outcome": "GOV_WON"},
+    {"idx": 69, "vanilla_tokens": 354, "vanilla_time": 12.0, "vanilla_res": "OK", "gov_tokens": 145, "gov_time": 4.9, "gov_res": "OK", "saved_pct": 59.0, "outcome": "EQUAL"},
+    {"idx": 70, "vanilla_tokens": 280, "vanilla_time": 9.5, "vanilla_res": "OK", "gov_tokens": 250, "gov_time": 8.4, "gov_res": "OK", "saved_pct": 10.7, "outcome": "EQUAL"},
+    {"idx": 71, "vanilla_tokens": 450, "vanilla_time": 15.0, "vanilla_res": "X", "gov_tokens": 222, "gov_time": 7.4, "gov_res": "OK", "saved_pct": 50.7, "outcome": "GOV_WON"},
+    {"idx": 72, "vanilla_tokens": 264, "vanilla_time": 8.8, "vanilla_res": "OK", "gov_tokens": 120, "gov_time": 4.0, "gov_res": "OK", "saved_pct": 54.5, "outcome": "EQUAL"},
+    {"idx": 73, "vanilla_tokens": 425, "vanilla_time": 14.3, "vanilla_res": "OK", "gov_tokens": 305, "gov_time": 10.4, "gov_res": "OK", "saved_pct": 28.2, "outcome": "EQUAL"},
+    {"idx": 74, "vanilla_tokens": 450, "vanilla_time": 15.0, "vanilla_res": "OK", "gov_tokens": 179, "gov_time": 5.9, "gov_res": "OK", "saved_pct": 60.2, "outcome": "EQUAL"},
+    {"idx": 75, "vanilla_tokens": 450, "vanilla_time": 15.1, "vanilla_res": "X", "gov_tokens": 193, "gov_time": 6.5, "gov_res": "OK", "saved_pct": 57.1, "outcome": "GOV_WON"}
+  ]
+}

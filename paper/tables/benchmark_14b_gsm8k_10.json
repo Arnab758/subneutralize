@@ -1,0 +1,41 @@
+{
+  "benchmark_metadata": {
+    "model_id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
+    "dataset": "openai/gsm8k",
+    "split": "test",
+    "num_samples": 10,
+    "hardware": "NVIDIA A100-SXM4-40GB",
+    "date": "2026-09-22",
+    "target_layer_idx": 24,
+    "total_layers": 48,
+    "hidden_size": 5120,
+    "velocity_threshold": 0.22,
+    "min_deduction_tokens": 25,
+    "max_new_tokens": 450
+  },
+  "aggregate_metrics": {
+    "total_vanilla_tokens": 4116,
+    "total_neutralized_tokens": 3912,
+    "total_tokens_saved": 204,
+    "net_compute_reduction_pct": 5.0,
+    "vanilla_accuracy_pct": 50.0,
+    "neutralized_accuracy_pct": 60.0,
+    "accuracy_gain_pct": 10.0,
+    "flips_prevented_neut_won": 2,
+    "vanilla_won": 1,
+    "both_equal": 4,
+    "both_fail": 3
+  },
+  "problem_results": [
+    {"idx": 1, "vanilla_tokens": 450, "neut_tokens": 450, "savings_pct": 0.0, "triggered_token": 86, "outcome": "VAN_WON"},
+    {"idx": 2, "vanilla_tokens": 267, "neut_tokens": 260, "savings_pct": 2.6, "triggered_token": 92, "outcome": "EQUAL"},
+    {"idx": 3, "vanilla_tokens": 450, "neut_tokens": 450, "savings_pct": 0.0, "triggered_token": 25, "outcome": "BOTH_FAIL"},
+    {"idx": 4, "vanilla_tokens": 318, "neut_tokens": 291, "savings_pct": 8.5, "triggered_token": 101, "outcome": "EQUAL"},
+    {"idx": 5, "vanilla_tokens": 450, "neut_tokens": 346, "savings_pct": 23.1, "triggered_token": 224, "outcome": "NEUT_WON"},
+    {"idx": 6, "vanilla_tokens": 409, "neut_tokens": 351, "savings_pct": 14.2, "triggered_token": 275, "outcome": "EQUAL"},
+    {"idx": 7, "vanilla_tokens": 422, "neut_tokens": 444, "savings_pct": -5.2, "triggered_token": 25, "outcome": "EQUAL"},
+    {"idx": 8, "vanilla_tokens": 450, "neut_tokens": 450, "savings_pct": 0.0, "triggered_token": 58, "outcome": "BOTH_FAIL"},
+    {"idx": 9, "vanilla_tokens": 450, "neut_tokens": 450, "savings_pct": 0.0, "triggered_token": 94, "outcome": "BOTH_FAIL"},
+    {"idx": 10, "vanilla_tokens": 450, "neut_tokens": 420, "savings_pct": 6.7, "triggered_token": 95, "outcome": "NEUT_WON"}
+  ]
+}

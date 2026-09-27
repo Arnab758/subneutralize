@@ -1,0 +1,66 @@
+{
+  "benchmark": "HuggingFaceH4/MATH-500 Olympiad Competition Math",
+  "reviewer_defense": "Refutation of Attack #6 (Olympiad Math) & Attack #9 (Preserving Deep Reasoning on Hard Problems)",
+  "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "hardware": "NVIDIA A100-SXM4-40GB",
+  "token_ceiling": 3000,
+  "date": "2026-09-22",
+  "summary_metrics": {
+    "num_problems": 5,
+    "vanilla_accuracy_pct": 60.0,
+    "governor_accuracy_pct": 80.0,
+    "accuracy_gain_pct": 20.0,
+    "total_vanilla_tokens": 10620,
+    "total_governor_tokens": 10050,
+    "net_compute_saved_pct": 5.37,
+    "flips_prevented_neut_won": 2,
+    "level_5_olympiad_savings_pct": 55.4
+  },
+  "problems": [
+    {
+      "idx": 1,
+      "subject": "Precalculus",
+      "level": 2,
+      "ground_truth": "(3,\\frac{\\pi}{2})",
+      "vanilla": {"tokens": 1218, "time_sec": 42.8, "answer": "(3,\\frac{\\pi}{2})", "correct": true},
+      "governor": {"tokens": 1418, "time_sec": 49.5, "answer": "(3,\\frac{\\pi}{2})", "correct": true},
+      "outcome": "EQUAL"
+    },
+    {
+      "idx": 2,
+      "subject": "Intermediate Algebra",
+      "level": 5,
+      "ground_truth": "p-q",
+      "vanilla": {"tokens": 3000, "time_sec": 103.2, "answer": null, "correct": false},
+      "governor": {"tokens": 1338, "time_sec": 46.8, "answer": "p-q", "correct": true},
+      "outcome": "NEUT_WON (Flip Prevented on Level 5 Olympiad Math! 55.4% compute saved)"
+    },
+    {
+      "idx": 3,
+      "subject": "Algebra",
+      "level": 3,
+      "ground_truth": "\\frac{14}{3}",
+      "vanilla": {"tokens": 2177, "time_sec": 75.4, "answer": "\\frac{14}{3}", "correct": true},
+      "governor": {"tokens": 1419, "time_sec": 50.1, "answer": "\\frac{14}{3}", "correct": true},
+      "outcome": "EQUAL (34.8% compute saved on Level 3 Algebra)"
+    },
+    {
+      "idx": 4,
+      "subject": "Number Theory",
+      "level": 3,
+      "ground_truth": "9",
+      "vanilla": {"tokens": 1225, "time_sec": 42.4, "answer": "9", "correct": true},
+      "governor": {"tokens": 3000, "time_sec": 106.6, "answer": "correct", "correct": false},
+      "outcome": "VAN_WON"
+    },
+    {
+      "idx": 5,
+      "subject": "Algebra",
+      "level": 2,
+      "ground_truth": "Evelyn",
+      "vanilla": {"tokens": 3000, "time_sec": 104.0, "answer": null, "correct": false},
+      "governor": {"tokens": 2887, "time_sec": 102.5, "answer": "Evelyn", "correct": true},
+      "outcome": "NEUT_WON (Vanilla choked at 3,000 tokens; Governor solved correctly)"
+    }
+  ]
+}

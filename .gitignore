@@ -1,0 +1,46 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# Testing & caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Internal launch notes, drafts, social posts & guides
+LAUNCH_ASSETS_SHOW_HN_AND_SOCIALS.md
+DEMO_VIDEO_GUIDE.md
+MASTER_ROADMAP.md
+chatgpt_review.txt
+*.docx
+paper/*EV*
+
+# Scratch & extraction scripts
+extract.py
+find_*.py
+get_chatgpt.py
+save_*.py
+step_*.py
+step_*.txt
+
+# Notebooks & Colab runners
+notebooks/
+*.ipynb

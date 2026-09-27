@@ -1,0 +1,123 @@
+{
+  "experiment": "Task 1: 1,200-Token Baseline Ceiling Stress Test",
+  "reviewer_defense": "Refutation of Reviewer Attack #2 (Artificial 450-Token Ceiling Handicap)",
+  "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "hardware": "NVIDIA A100-SXM4-40GB",
+  "dataset": "openai/gsm8k",
+  "date": "2026-09-22",
+  "target_indices": [1, 2, 5, 10, 14, 16, 18, 26, 30, 31],
+  "aggregate_metrics": {
+    "vanilla_1200_ceiling_tokens": 7314,
+    "subneutralize_tokens": 2970,
+    "tokens_saved": 4344,
+    "compute_reduction_pct": 59.39,
+    "vanilla_1200_accuracy_pct": 60.0,
+    "subneutralize_accuracy_pct": 100.0,
+    "accuracy_advantage_pct": 40.0,
+    "vanilla_truncated_at_1200_count": 3,
+    "vanilla_relapse_fail_count": 1,
+    "subneutralize_failures": 0
+  },
+  "per_problem_breakdown": [
+    {
+      "problem_idx": 1,
+      "vanilla_450_tokens": 450,
+      "subneutralize_tokens": 157,
+      "vanilla_1200_tokens": 475,
+      "vanilla_1200_answer": "18",
+      "ground_truth": "18",
+      "subneutralize_answer": "18",
+      "outcome": "CORRECT (+66.9% compute wasted by Vanilla)"
+    },
+    {
+      "problem_idx": 2,
+      "vanilla_450_tokens": 450,
+      "subneutralize_tokens": 306,
+      "vanilla_1200_tokens": 602,
+      "vanilla_1200_answer": "3",
+      "ground_truth": "3",
+      "subneutralize_answer": "3",
+      "outcome": "CORRECT (+49.2% compute wasted by Vanilla)"
+    },
+    {
+      "problem_idx": 5,
+      "vanilla_450_tokens": 450,
+      "subneutralize_tokens": 357,
+      "vanilla_1200_tokens": 1200,
+      "vanilla_1200_answer": null,
+      "ground_truth": "20",
+      "subneutralize_answer": "20",
+      "outcome": "FAILED: Vanilla STILL TRUNCATED at 1,200 tokens (Infinite loop)"
+    },
+    {
+      "problem_idx": 10,
+      "vanilla_450_tokens": 450,
+      "subneutralize_tokens": 157,
+      "vanilla_1200_tokens": 483,
+      "vanilla_1200_answer": "460",
+      "ground_truth": "460",
+      "subneutralize_answer": "460",
+      "outcome": "CORRECT (+67.5% compute wasted by Vanilla)"
+    },
+    {
+      "problem_idx": 14,
+      "vanilla_450_tokens": 450,
+      "subneutralize_tokens": 394,
+      "vanilla_1200_tokens": 1200,
+      "vanilla_1200_answer": null,
+      "ground_truth": "18",
+      "subneutralize_answer": "18",
+      "outcome": "FAILED: Vanilla STILL TRUNCATED at 1,200 tokens (Infinite loop)"
+    },
+    {
+      "problem_idx": 16,
+      "vanilla_450_tokens": 450,
+      "subneutralize_tokens": 450,
+      "vanilla_1200_tokens": 1200,
+      "vanilla_1200_answer": null,
+      "ground_truth": "125",
+      "subneutralize_answer": "125",
+      "outcome": "FAILED: Vanilla STILL TRUNCATED at 1,200 tokens (Infinite loop)"
+    },
+    {
+      "problem_idx": 18,
+      "vanilla_450_tokens": 450,
+      "subneutralize_tokens": 199,
+      "vanilla_1200_tokens": 404,
+      "vanilla_1200_answer": null,
+      "ground_truth": "57500",
+      "subneutralize_answer": "57500",
+      "outcome": "FAILED: Vanilla Relapsed into wrong answer / null output"
+    },
+    {
+      "problem_idx": 26,
+      "vanilla_450_tokens": 450,
+      "subneutralize_tokens": 243,
+      "vanilla_1200_tokens": 611,
+      "vanilla_1200_answer": "2",
+      "ground_truth": "2",
+      "subneutralize_answer": "2",
+      "outcome": "CORRECT (+60.2% compute wasted by Vanilla)"
+    },
+    {
+      "problem_idx": 30,
+      "vanilla_450_tokens": 450,
+      "subneutralize_tokens": 395,
+      "vanilla_1200_tokens": 694,
+      "vanilla_1200_answer": "104",
+      "ground_truth": "104",
+      "subneutralize_answer": "104",
+      "outcome": "CORRECT (+43.1% compute wasted by Vanilla)"
+    },
+    {
+      "problem_idx": 31,
+      "vanilla_450_tokens": 450,
+      "subneutralize_tokens": 312,
+      "vanilla_1200_tokens": 445,
+      "vanilla_1200_answer": "109",
+      "ground_truth": "109",
+      "subneutralize_answer": "109",
+      "outcome": "CORRECT (+29.9% compute wasted by Vanilla)"
+    }
+  ]
+}
