@@ -44,45 +44,118 @@ Evaluated on an **NVIDIA A100-SXM4-40GB** running `DeepSeek-R1-Distill-Qwen-32B`
 
 ---
 
-## 🚀 Quickstart
+## 💻 Quickstart: Connect to Cursor, VS Code, or Antigravity
+
+Nobody wants to type coding prompts into a bash terminal. SubNeutralize includes a built-in **OpenAI-compatible inference gateway** that plugs directly into your everyday development environment with real-time SSE streaming.
+
+```
+┌────────────────────────┐         ┌────────────────────────┐         ┌────────────────────────┐
+│  Cursor / VS Code IDE  │ ──────> │  SubNeutralize Gateway │ ──────> │  Local / Hosted Model  │
+│  (Cmd+K / Chat Sidebar)│ <────── │  (Layer-14 Governor)   │ <────── │  (DeepSeek-R1 / Qwen)  │
+└────────────────────────┘         └────────────────────────┘         └────────────────────────┘
+     Developer types                   Intercepts hidden states           Stops model the moment
+     naturally in IDE.                 & streams SSE tokens               solution stabilizes.
+                                       4.51x faster back to IDE.          Zero looping.
+```
 
 ### 1. Installation
 ```bash
 pip install subneutralize
 ```
 
+### 2. Launch the Gateway
+```bash
+# Starts the OpenAI-compatible gateway on http://localhost:8000/v1
+subneutralize serve --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+
+# Or target larger models (7B, 14B, 32B) and custom ports:
+subneutralize serve --model deepseek-ai/DeepSeek-R1-Distill-Qwen-14B --port 8000
+```
+
+### 3. Connect Your IDE (Takes 30 Seconds)
+
+* **Cursor:**
+  * Open **Settings** $\rightarrow$ **Models** $\rightarrow$ **OpenAI API**.
+  * **Base URL:** `http://localhost:8000/v1`
+  * **API Key:** `subneutralize` *(any non-empty string)*
+  * **Model Name:** `deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B` *(or your loaded model)*
+  * Press `Cmd+K` or open the chat panel and code normally!
+
+* **VS Code (Continue / Cline / Roo Code):**
+  * In your extension config (`config.json`), set:
+    ```json
+    {
+      "models": [
+        {
+          "title": "SubNeutralize DeepSeek-R1",
+          "provider": "openai",
+          "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+          "apiBase": "http://localhost:8000/v1",
+          "apiKey": "subneutralize"
+        }
+      ]
+    }
+    ```
+
+* **Aider (CLI Pair Programmer):**
+  ```bash
+  aider --openai-api-base http://localhost:8000/v1 --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+  ```
+
 ---
 
-### 2. Method A: Instant Terminal CLI (Zero Python Code)
+## 📈 Real-Time Telemetry & Live Savings
 
-Run SubNeutralize on any custom prompt directly from your terminal:
+Every time your IDE requests code or an inline edit, the SubNeutralize gateway prints live telemetry to your terminal:
 
+```text
+ [IDE STREAM] Prompt: 42 words | Generated: 148 tok | Thinking: 87 tok | Saved: ~1,265 tok (84.3%) | Latency: 2.14s (4.51x faster)
+```
+
+You can also run a side-by-side benchmark comparing unconstrained Vanilla DeepSeek-R1 against SubNeutralize anytime:
 ```bash
-# Direct governed generation on any prompt
-subneutralize "Write a thread-safe token bucket rate limiter in Python"
-
-# Run a live head-to-head comparison vs. unconstrained Vanilla baseline
 subneutralize --compare "Write a thread-safe token bucket rate limiter in Python"
-
-# Launch the interactive prompt shell
-subneutralize
 ```
 
 ---
 
-### 3. Method B: 2 Lines in Python
+## 💰 The Economics: Why Compute Savings Matter for Open-Source
 
+A common misconception is: *"Open source weights are free, so why does token efficiency matter?"*
+
+**Model weights are free to download; running inference is 100% NOT free.**
+
+1. **Hardware & GPU Cloud Costs:**
+   * Renting an **NVIDIA A100 SXM4** costs **$2.50–$3.50/hour** (~$1,800–$2,500/month per GPU).
+   * Buying an enterprise GPU workstation costs **$15,000–$35,000+**.
+   * **The Throughput Bottleneck:** When an unconstrained reasoning model spends 1,500 tokens (120–150 seconds) overthinking, **one GPU can only serve ~24 queries per hour**.
+   * With SubNeutralize cutting overthinking to ~100–200 tokens (25s, 4.51× speedup), that same GPU can serve **140+ queries per hour**, reducing required GPU instances by **~78%**.
+2. **Hosted Inference APIs (Together, Fireworks, Groq, DeepSeek API):**
+   * Managed providers charge **strictly per output token** (including internal reasoning tokens).
+   * Overthinking burns 1,200+ redundant tokens on internal monologue. SubNeutralize cuts output tokens by **~78%**, directly slashing monthly API bills by **~78%**.
+3. **Developer Flow State (Human Latency):**
+   * Developers in Cursor or VS Code hate waiting 2 minutes for code completion. SubNeutralize drops wait time from 150 seconds down to 25 seconds.
+
+> **Note on Compatibility:** SubNeutralize inspects intermediate transformer activations (residual stream at Layer 14). It works with **all open-weight reasoning models** (DeepSeek-R1, Qwen-2.5, LLaMA-3). It cannot run on closed proprietary APIs (Claude 3.5 Sonnet, GPT-4o) because commercial API vendors do not expose hidden-layer activations.
+
+---
+
+## 🐍 Python SDK Usage
+
+If you prefer programmatic integration in your own Python backend or pipeline:
+
+### Direct Engine Generation
 ```python
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from subneutralize import SubNeutralize
 
-# 1. Load any reasoning model (DeepSeek-R1, Qwen-QwQ, etc.)
-model_id = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" # Or 7B / 14B / 32B
+# 1. Load any open-weight reasoning model
+model_id = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.bfloat16, device_map="auto")
 
-# 2. Wrap with SubNeutralize (automatically resolves cognitive midpoint layer)
+# 2. Wrap with SubNeutralize (automatically hooks the cognitive midpoint layer)
 engine = SubNeutralize(model, tokenizer)
 
 # 3. Generate governed response on ANY prompt
@@ -93,12 +166,7 @@ print(f"Thinking Tokens: {output.thinking_tokens} | Code Tokens: {output.code_to
 print(f"Latency: {output.wall_clock_seconds:.1f}s | Consensus Reached: {output.consensus_reached}")
 ```
 
----
-
-### 4. Method C: Drop-in `StoppingCriteria` for Existing Pipelines
-
-If you already have an existing generation loop or server calling `model.generate()`, drop SubNeutralize directly into your stopping criteria:
-
+### Drop-in `StoppingCriteria` for Existing HuggingFace Pipelines
 ```python
 engine = SubNeutralize(model, tokenizer)
 
