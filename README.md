@@ -1,5 +1,6 @@
 # SubNeutralize: Universal Runtime Inference Governor for Reasoning Models
 
+[![PyPI version](https://badge.fury.io/py/subneutralize.svg)](https://pypi.org/project/subneutralize/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
 [![NVIDIA A100](https://img.shields.io/badge/Hardware-NVIDIA%20A100--SXM4--40GB-76B900?logo=nvidia)](https://www.nvidia.com)
