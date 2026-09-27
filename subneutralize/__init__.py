@@ -12,7 +12,7 @@ from .engine import SubNeutralize, govern
 # Legacy alias for backward compatibility
 ConsensusEntropyGovernor = ScaleFreeDynamicalGovernor
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __author__ = "Arnab Dutta"
 
 __all__ = [

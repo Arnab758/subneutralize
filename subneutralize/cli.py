@@ -144,9 +144,12 @@ def main():
         prog="subneutralize",
         description="SubNeutralize: Scale-Free Runtime Inference Governor for Reasoning Models"
     )
-    parser.add_argument("prompt", nargs="?", default=None, help="User prompt to govern (or omit for interactive mode)")
+    parser.add_argument("command_or_prompt", nargs="?", default=None, help="'serve' to launch OpenAI gateway for Cursor/VS Code, or prompt to govern")
     parser.add_argument("--model", type=str, default="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B", help="Model ID (default: deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B)")
     parser.add_argument("--device", type=str, default=default_dev, help=f"Execution device (default: {default_dev})")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Gateway host for serve mode (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=8000, help="Gateway port for serve mode (default: 8000)")
+    parser.add_argument("--serve", action="store_true", help="Launch OpenAI-compatible local proxy for Cursor / IDEs")
     parser.add_argument("--compare", action="store_true", help="Run head-to-head comparison vs. unconstrained Vanilla baseline")
     parser.add_argument("--benchmark", action="store_true", help="Run the official enterprise 4-problem test suite")
     parser.add_argument("--interactive", "-i", action="store_true", help="Launch interactive REPL session")
@@ -158,18 +161,24 @@ def main():
         run_benchmark()
         return
 
+    if args.serve or (args.command_or_prompt and args.command_or_prompt.lower() == "serve"):
+        from .server import start_server
+        start_server(model_id=args.model, host=args.host, port=args.port, device=args.device)
+        return
+
     if not _HAS_TORCH:
         print("[ERROR] PyTorch is required to run inference. Please install torch: pip install torch")
         sys.exit(1)
 
-    if args.interactive or (args.prompt is None and not args.benchmark):
+    prompt = args.command_or_prompt
+    if args.interactive or (prompt is None and not args.benchmark):
         run_interactive_repl(args.model, args.device)
     elif args.compare:
         print_banner()
-        run_prompt_comparison(args.model, args.prompt, args.device)
+        run_prompt_comparison(args.model, prompt, args.device)
     else:
         print_banner()
-        run_governed_prompt(args.model, args.prompt, args.device)
+        run_governed_prompt(args.model, prompt, args.device)
 
 
 if __name__ == "__main__":
