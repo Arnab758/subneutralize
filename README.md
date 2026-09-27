@@ -44,37 +44,69 @@ Evaluated on an **NVIDIA A100-SXM4-40GB** running `DeepSeek-R1-Distill-Qwen-32B`
 
 ---
 
-## 🚀 Quickstart (2 Lines of Code)
+## 🚀 Quickstart
 
 ### 1. Installation
 ```bash
 pip install subneutralize
-# Or install locally:
-git clone https://github.com/arnabdutta-ai/subneutralize.git
-cd subneutralize && pip install -e .
 ```
 
-### 2. Basic Usage
+---
+
+### 2. Method A: Instant Terminal CLI (Zero Python Code)
+
+Run SubNeutralize on any custom prompt directly from your terminal:
+
+```bash
+# Direct governed generation on any prompt
+subneutralize "Write a thread-safe token bucket rate limiter in Python"
+
+# Run a live head-to-head comparison vs. unconstrained Vanilla baseline
+subneutralize --compare "Write a thread-safe token bucket rate limiter in Python"
+
+# Launch the interactive prompt shell
+subneutralize
+```
+
+---
+
+### 3. Method B: 2 Lines in Python
+
 ```python
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from subneutralize import SubNeutralize
 
-# 1. Load your reasoning model
-model_id = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B" # Or 32B / 70B
+# 1. Load any reasoning model (DeepSeek-R1, Qwen-QwQ, etc.)
+model_id = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" # Or 7B / 14B / 32B
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.bfloat16, device_map="auto")
 
-# 2. Wrap with SubNeutralize (automatically hooks into cognitive midpoint layer)
+# 2. Wrap with SubNeutralize (automatically resolves cognitive midpoint layer)
 engine = SubNeutralize(model, tokenizer)
 
-# 3. Generate governed responses
-prompt = "Write a thread-safe token bucket rate limiter in Python:"
-output = engine.generate(prompt, max_new_tokens=1500)
+# 3. Generate governed response on ANY prompt
+output = engine.generate("Write a thread-safe token bucket rate limiter in Python:")
 
 print(output.clean_code)
 print(f"Thinking Tokens: {output.thinking_tokens} | Code Tokens: {output.code_tokens}")
 print(f"Latency: {output.wall_clock_seconds:.1f}s | Consensus Reached: {output.consensus_reached}")
+```
+
+---
+
+### 4. Method C: Drop-in `StoppingCriteria` for Existing Pipelines
+
+If you already have an existing generation loop or server calling `model.generate()`, drop SubNeutralize directly into your stopping criteria:
+
+```python
+engine = SubNeutralize(model, tokenizer)
+
+outputs = model.generate(
+    **inputs,
+    max_new_tokens=1500,
+    stopping_criteria=[engine.as_stopping_criteria()]
+)
 ```
 
 ---

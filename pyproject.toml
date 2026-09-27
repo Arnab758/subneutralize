@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "subneutralize"
-version = "0.1.0"
+version = "0.1.1"
 description = "Universal Parameter-Free Runtime Inference Governor for Autoregressive Reasoning Models"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -37,6 +37,9 @@ dependencies = [
     "torch>=2.0.0",
     "transformers>=4.40.0",
 ]
+
+[project.scripts]
+subneutralize = "subneutralize.cli:main"
 
 [project.urls]
 "Homepage" = "https://github.com/Arnab758/subneutralize"
