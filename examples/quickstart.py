@@ -1,12 +1,13 @@
 """
 SubNeutralize Quickstart Example
 ================================
-Demonstrates how to attach the runtime governor to an autoregressive model in under 15 lines.
+Demonstrates how to attach the runtime governor to an autoregressive model in 2 lines.
 """
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from subneutralize import ConsensusEntropyGovernor
+from subneutralize import SubNeutralize
+
 
 def main():
     model_id = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
@@ -14,31 +15,26 @@ def main():
 
     print(f"Loading {model_id}...")
     tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(model_id, device_map=device)
-
-    # 1. Initialize and attach the governor
-    governor = ConsensusEntropyGovernor(model, tokenizer)
-    governor.attach()
-
-    prompt = "Solve for x: 3x + 15 = 42. Show step-by-step reasoning."
-    inputs = tokenizer(prompt, return_tensors="pt").to(device)
-
-    print("Generating response with SubNeutralize...")
-    outputs = model.generate(
-        **inputs,
-        max_new_tokens=1024,
-        stopping_criteria=[governor.as_stopping_criteria()],
-        return_dict_in_generate=True,
-        output_scores=True
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id, 
+        device_map=device,
+        torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32
     )
 
-    # 2. Detach when finished
-    governor.detach()
+    # 1. Initialize SubNeutralize on the model
+    governor = SubNeutralize(model, tokenizer)
 
-    generated_text = tokenizer.decode(outputs.sequences[0], skip_special_tokens=True)
-    tokens_used = outputs.sequences[0].shape[-1] - inputs.input_ids.shape[-1]
-    print(f"\nCompleted in {tokens_used} tokens.")
-    print(f"Response:\n{generated_text}")
+    prompt = "Write a thread-safe token bucket rate limiter with microsecond refills in Python."
+    print("Generating governed response with SubNeutralize...")
+
+    # 2. Run governed inference (stops overthinking automatically)
+    output = governor.generate(prompt, max_new_tokens=1024)
+
+    print(f"\nCompleted in {output.total_tokens} tokens ({output.thinking_tokens} thinking + {output.code_tokens} code).")
+    print(f"Consensus reached: {output.consensus_reached} at token {output.consensus_step}")
+    print(f"Wall-clock time: {output.wall_clock_seconds:.2f}s")
+    print(f"\n--- Clean Extracted Code ---\n{output.clean_code}")
+
 
 if __name__ == "__main__":
     main()

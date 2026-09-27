@@ -5,7 +5,7 @@ Side-by-side benchmark evaluation script: Vanilla vs. SubNeutralize.
 import time
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from subneutralize import ConsensusEntropyGovernor
+from subneutralize import SubNeutralize
 
 SAMPLE_PROBLEMS = [
     "A bakery sells cakes for $18 each and cookies for $3 each. If Sarah buys 4 cakes and 12 cookies, how much does she spend in total?",
@@ -18,8 +18,12 @@ def run_benchmark(model_id: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"):
     print(f"[*] Initializing benchmark on {device} using {model_id}...")
 
     tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(model_id, device_map=device)
-    governor = ConsensusEntropyGovernor(model, tokenizer)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id, 
+        device_map=device,
+        torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32
+    )
+    governor = SubNeutralize(model, tokenizer)
 
     total_vanilla_tokens = 0
     total_governed_tokens = 0
@@ -39,17 +43,8 @@ def run_benchmark(model_id: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"):
         total_vanilla_tokens += tokens_vanilla
 
         # 2. SubNeutralize Run
-        governor.attach()
-        with torch.no_grad():
-            out_gov = model.generate(
-                **inputs,
-                max_new_tokens=1024,
-                stopping_criteria=[governor.as_stopping_criteria()],
-                return_dict_in_generate=True,
-                output_scores=True
-            )
-        governor.detach()
-        tokens_gov = out_gov.sequences[0].shape[-1] - prompt_len
+        out_gov = governor.generate(prompt, max_new_tokens=1024)
+        tokens_gov = out_gov.total_tokens
         total_governed_tokens += tokens_gov
 
         reduction = (1.0 - tokens_gov / max(1, tokens_vanilla)) * 100.0

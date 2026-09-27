@@ -39,8 +39,8 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/arnabdutta-ai/subneutralize"
-"Bug Tracker" = "https://github.com/arnabdutta-ai/subneutralize/issues"
+"Homepage" = "https://github.com/Arnab758/subneutralize"
+"Bug Tracker" = "https://github.com/Arnab758/subneutralize/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]

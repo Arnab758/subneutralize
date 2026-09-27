@@ -113,26 +113,25 @@ def extract_clean_code(generated_text: str) -> str:
     """
     Universal multi-format code extractor.
     Handles all LLM emission styles across DeepSeek, Claude, GPT, and GLM:
-    1. Prompts continuing into markdown fences (```python ... ```)
-    2. Embedded markdown code blocks
+    1. Embedded markdown code blocks (```python ... ```)
+    2. Prompts continuing from or into markdown fences
     3. Raw Python functions/classes without markdown wrappers
     """
     text = generated_text.strip()
     
-    # Format 1: Direct continuation from a prompt fence (e.g. ```python\n)
+    # Format 1: Model emitted a standard full block somewhere in response
+    block_match = re.search(r"```(?:python)?\s*\n(.*?)\n```", text, re.DOTALL)
+    if block_match:
+        return block_match.group(1).strip()
+
+    # Format 2: Direct continuation from a prompt fence (e.g. ```python\n)
     if text.startswith("```python"):
         text = text[len("```python"):].strip()
     elif text.startswith("```"):
         text = text[3:].strip()
         
     if "```" in text:
-        text = text.split("```", 1)[0].strip()
-        return text
-
-    # Format 2: Model emitted a standard full block somewhere in response
-    block_match = re.search(r"```(?:python)?\s*\n(.*?)\n```", generated_text, re.DOTALL)
-    if block_match:
-        return block_match.group(1).strip()
+        return text.split("```", 1)[0].strip()
 
     # Format 3: Raw code with def/class keywords
     lines = text.split("\n")
