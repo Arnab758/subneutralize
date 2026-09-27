@@ -104,3 +104,19 @@ def test_extract_clean_code():
     raw_code = "def add(a, b):\n    return a + b"
     clean_code = extract_clean_code(raw_code)
     assert clean_code == raw_code
+
+
+def test_as_stopping_criteria():
+    model = MockTransformer(num_layers=16, hidden_dim=32)
+    engine = SubNeutralize(model, tokenizer=None, warmup_tokens=2)
+    criteria = engine.as_stopping_criteria()
+    assert callable(criteria)
+    
+    # Simulate hook trigger and criteria evaluation
+    engine._current_hidden = torch.randn(1, 32)
+    res = criteria(torch.tensor([[1, 2]]))
+    assert res is False
+    
+    engine.detach()
+    assert engine._hook_handle is None
+

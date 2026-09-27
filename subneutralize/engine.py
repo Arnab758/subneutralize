@@ -82,6 +82,38 @@ class SubNeutralize:
             
         return layers[self.target_layer]
 
+    def attach(self):
+        """Attaches forward hook to model's cognitive bottleneck layer."""
+        if self._hook_handle is None:
+            self._hook_handle = self.layer_module.register_forward_hook(self._hook_fn)
+
+    def detach(self):
+        """Detaches forward hook safely."""
+        if self._hook_handle is not None:
+            self._hook_handle.remove()
+            self._hook_handle = None
+
+    def as_stopping_criteria(self):
+        """
+        Returns a Hugging Face compatible StoppingCriteria callable.
+        Allows drop-in integration with native model.generate(..., stopping_criteria=[...]).
+        """
+        self.attach()
+        self.governor.reset()
+
+        class _SubNeutralizeCriteria:
+            def __init__(criteria_self, parent):
+                criteria_self.parent = parent
+            def __call__(criteria_self, input_ids: torch.LongTensor, scores: Optional[torch.FloatTensor] = None, **kwargs) -> bool:
+                if criteria_self.parent._current_hidden is not None:
+                    return criteria_self.parent.governor.update(
+                        criteria_self.parent._current_hidden, 
+                        logits=scores if scores is not None else None
+                    )
+                return False
+
+        return _SubNeutralizeCriteria(self)
+
     def _hook_fn(self, module, inp, outp):
         """Captures last token's residual hidden state non-destructively."""
         hidden = outp[0] if isinstance(outp, tuple) else outp
