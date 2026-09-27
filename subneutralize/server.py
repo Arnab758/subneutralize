@@ -102,8 +102,12 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
         cmpl_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
         created_time = int(time.time())
 
+        tokens_saved = max(0, 1500 - out.total_tokens)
+        pct_saved = (tokens_saved / 1500.0) * 100.0
+
         # 3. Handle Streaming response for Cursor/IDE real-time typing
         if req.stream:
+            print(f" [IDE STREAM] Prompt: {len(prompt.split())} words | Generated: {out.code_tokens} tok | Thinking: {out.thinking_tokens} tok | Saved: ~{tokens_saved} tok ({pct_saved:.1f}%) | Latency: {out.wall_clock_seconds:.2f}s")
             async def event_generator():
                 # Stream the clean output in chunked tokens
                 words = out.clean_code.split(" ")
@@ -142,6 +146,8 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
                 yield "data: [DONE]\n\n"
 
             return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+        print(f" [IDE SYNC] Prompt: {len(prompt.split())} words | Generated: {out.code_tokens} tok | Thinking: {out.thinking_tokens} tok | Saved: ~{tokens_saved} tok ({pct_saved:.1f}%) | Latency: {out.wall_clock_seconds:.2f}s")
 
         # 4. Standard Non-Streaming JSON Response
         return {
