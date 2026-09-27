@@ -1,11 +1,14 @@
 # SubNeutralize: Universal Runtime Inference Governor for Reasoning Models
 
 [![PyPI version](https://badge.fury.io/py/subneutralize.svg)](https://pypi.org/project/subneutralize/)
+[![Paper PDF](https://img.shields.io/badge/Research%20Paper-PDF-red.svg)](paper/SubNeutralize_Paper.pdf)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
 [![NVIDIA A100](https://img.shields.io/badge/Hardware-NVIDIA%20A100--SXM4--40GB-76B900?logo=nvidia)](https://www.nvidia.com)
 
 > **SubNeutralize** is a parameter-free, scale-free runtime inference governor that eliminates the **"Overthinking Crisis"** in autoregressive reasoning models (DeepSeek-R1, Qwen, and frontier reasoning LLMs) by tracking latent trajectory dynamics and transitioning immediately upon reaching dynamical consensus equilibrium.
+>
+> 📄 **Read the Full Research Paper (9 pages, with theorems and proofs):** [**paper/SubNeutralize_Paper.pdf**](paper/SubNeutralize_Paper.pdf)
 
 ---
 
