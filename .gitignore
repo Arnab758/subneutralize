@@ -32,6 +32,9 @@ MASTER_ROADMAP.md
 chatgpt_review.txt
 *.docx
 paper/*EV*
+paper/*Deck*
+generate_deck.py
+*Deck*
 
 # Scratch & extraction scripts
 extract.py
