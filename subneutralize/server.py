@@ -76,22 +76,13 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
 
     @app.post("/v1/chat/completions")
     async def chat_completions(req: ChatCompletionRequest):
-        # 1. Reconstruct prompt from messages
-        prompt_parts = []
-        for msg in req.messages:
-            if msg.role == "system":
-                prompt_parts.append(f"System: {msg.content}")
-            elif msg.role == "user":
-                prompt_parts.append(f"User: {msg.content}")
-            elif msg.role == "assistant":
-                prompt_parts.append(f"Assistant: {msg.content}")
-
-        prompt = "\n\n".join(prompt_parts) + "\n\nAssistant:"
+        # 1. Prepare structured messages for native model chat template handling
+        messages_payload = [{"role": msg.role, "content": msg.content} for msg in req.messages]
 
         # 2. Execute SubNeutralize governed generation
         try:
             out = engine.generate(
-                prompt=prompt,
+                prompt=messages_payload,
                 max_new_tokens=req.max_tokens or 1500,
                 temperature=req.temperature or 0.6,
                 top_p=req.top_p or 0.95
@@ -102,10 +93,10 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
         cmpl_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
         created_time = int(time.time())
 
-        # Select content: code if available, otherwise answer or full text
-        response_content = getattr(out, "clean_code", None) or getattr(out, "answer", None) or getattr(out, "text", "")
+        # Select content: preserve full synthesized answer/explanation in IDE gateway
+        response_content = getattr(out, "answer", None) or getattr(out, "clean_code", None) or getattr(out, "text", "")
         reasoning_content = getattr(out, "reasoning", "")
-        code_toks = getattr(out, "code_tokens", getattr(out, "answer_tokens", 0))
+        ans_toks = getattr(out, "answer_tokens", getattr(out, "code_tokens", 0))
 
         # 3. Handle Streaming response for Cursor/IDE real-time typing
         if req.stream:
@@ -168,8 +159,8 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
                 }
             ],
             "usage": {
-                "prompt_tokens": len(prompt.split()),
-                "completion_tokens": code_toks,
+                "prompt_tokens": sum(len(m["content"].split()) for m in messages_payload),
+                "completion_tokens": ans_toks,
                 "total_tokens": out.total_tokens,
                 "subneutralize_telemetry": {
                     "thinking_tokens": out.thinking_tokens,

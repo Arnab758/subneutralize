@@ -173,15 +173,21 @@ class SubNeutralize:
         # Extract the latest generated token's representation
         self._current_hidden = hidden[:, -1, :].detach()
 
-    def _format_prompt(self, prompt: str) -> str:
+    def _format_prompt(self, prompt: Union[str, List[Dict[str, str]]]) -> str:
         """Applies model chat template if available to structure reasoning prompt."""
         if hasattr(self.tokenizer, "apply_chat_template") and getattr(self.tokenizer, "chat_template", None) is not None:
-            messages = [{"role": "user", "content": prompt}]
+            if isinstance(prompt, list):
+                messages = prompt
+            else:
+                messages = [{"role": "user", "content": prompt}]
             try:
                 formatted = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
                 return formatted
             except Exception:
                 pass
+        if isinstance(prompt, list):
+            parts = [f"{m.get('role', 'user').capitalize()}: {m.get('content', '')}" for m in prompt]
+            return "\n\n".join(parts) + "\n\nAssistant:"
         return prompt
 
     def _get_eos_ids(self) -> set:
@@ -198,7 +204,7 @@ class SubNeutralize:
 
     def generate(
         self,
-        prompt: str,
+        prompt: Union[str, List[Dict[str, str]]],
         max_new_tokens: int = 1500,
         answer_budget_tokens: int = 800,
         temperature: float = 0.6,
