@@ -21,22 +21,26 @@ SubNeutralize introduces a **non-destructive dynamical governor** that monitors 
 
 ---
 
-## 🚀 Quickstart
+## 🛠️ 3 Ways to Use SubNeutralize (Choose Your Architecture)
 
-### 1. Installation
+SubNeutralize can be deployed in three distinct modes depending on your workflow and stack:
+
+### Option 1: As an OpenAI-Compatible AI Gateway (Cursor, VS Code, Cline, Aider)
+Run SubNeutralize on your GPU server hosting an open-source model. It exposes a standard `/v1/chat/completions` endpoint with SSE streaming that intercepts reasoning loops before streaming back to your IDE:
 
 ```bash
-pip install subneutralize
+subneutralize serve --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --port 8000
 ```
 
-For IDE gateway support (Cursor / VS Code Continue):
-```bash
-pip install "subneutralize[serve]"
-```
+#### IDE Configuration:
+* **Cursor:** Set OpenAI API Base URL to `http://localhost:8000/v1` (API key: `subneutralize`).
+* **VS Code (Continue / Cline):** Add model endpoint pointing to `http://localhost:8000/v1`.
+* **Aider:** `aider --openai-api-base http://localhost:8000/v1 --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B`
 
 ---
 
-### 2. Python SDK: 2-Line Integration
+### Option 2: As a Python SDK Wrapper (for Backends & AI Agents)
+Wrap any open-weights reasoning model in 2 lines of Python for backend microservices, batch processing, or agentic frameworks (LangChain, DSPy, CrewAI):
 
 ```python
 import torch
@@ -44,7 +48,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from subneutralize import SubNeutralize
 
 # 1. Load any open-weight reasoning model
-model_id = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" # Or 7B / 14B / 32B
+model_id = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"  # Or 7B / 14B / 32B
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.bfloat16, device_map="auto")
 
@@ -60,9 +64,10 @@ print(f"\nThinking Tokens: {output.thinking_tokens} | Answer Tokens: {output.ans
 print(f"Consensus Reached: {output.consensus_reached} at token {output.consensus_step}")
 ```
 
-### 3. Drop-in Hugging Face `StoppingCriteria`
+---
 
-Integrates directly with native `model.generate()` pipelines:
+### Option 3: As a Drop-in Hugging Face `StoppingCriteria`
+If you already have existing `model.generate()` pipelines with custom temperature, top-p, or speculative decoding, drop in the governor without altering your architecture:
 
 ```python
 governor = SubNeutralize(model, tokenizer)
@@ -76,33 +81,20 @@ outputs = model.generate(
 
 ---
 
-### 4. Interactive Terminal & Side-by-Side Comparison
+### ⚡ Matched-Budget Side-by-Side Shootout
+
+Run a fair, side-by-side comparison of **Vanilla Unconstrained Reasoning** vs. **SubNeutralize Governed Reasoning** directly in your terminal:
 
 ```bash
-# Single prompt execution with telemetry
+# Fair matched-budget comparison vs. unconstrained baseline
+subneutralize --compare "Write a thread-safe token bucket rate limiter with microsecond refills in Python"
+
+# Single prompt execution with live telemetry
 subneutralize "Explain why the square root of 2 is irrational"
 
-# Fair matched-budget comparison vs. unconstrained baseline
-subneutralize --compare "Write a thread-safe token bucket rate limiter in Python"
-
-# Interactive REPL
+# Interactive REPL session
 subneutralize -i
 ```
-
----
-
-## 💻 IDE Gateway: Connect to Cursor, VS Code, or Antigravity
-
-SubNeutralize includes an **OpenAI-compatible inference gateway** with Server-Sent Events (SSE) streaming, allowing you to use governed reasoning directly inside Cursor, VS Code, and other developer tools:
-
-```bash
-subneutralize serve --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --port 8000
-```
-
-### IDE Configuration:
-* **Cursor:** Set OpenAI API Base URL to `http://localhost:8000/v1` (API key: `subneutralize`).
-* **VS Code (Continue / Cline):** Add model endpoint pointing to `http://localhost:8000/v1`.
-* **Aider:** `aider --openai-api-base http://localhost:8000/v1 --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B`
 
 ---
 
