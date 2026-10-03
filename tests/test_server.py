@@ -10,9 +10,12 @@ from subneutralize.server import create_app
 
 class MockOutput:
     clean_code = "def add(a, b): return a + b"
+    answer = "Here is the function to add two numbers:\n```python\ndef add(a, b): return a + b\n```\nIt returns the sum."
+    reasoning = "The user wants an addition function. def add(a, b): return a + b is optimal."
     code_tokens = 12
+    answer_tokens = 25
     thinking_tokens = 45
-    total_tokens = 57
+    total_tokens = 70
     wall_clock_seconds = 0.85
     consensus_reached = True
     consensus_step = 45
@@ -59,10 +62,33 @@ def test_chat_completions_non_streaming():
     resp_json = res.json()
 
     assert resp_json["object"] == "chat.completion"
-    assert resp_json["choices"][0]["message"]["content"] == "def add(a, b): return a + b"
+    # Verify that the full answer text (including explanation) is preserved
+    assert "Here is the function to add two numbers:" in resp_json["choices"][0]["message"]["content"]
+    assert "def add(a, b): return a + b" in resp_json["choices"][0]["message"]["content"]
     assert resp_json["choices"][0]["finish_reason"] == "stop"
-    assert resp_json["usage"]["completion_tokens"] == 12
+    assert resp_json["usage"]["completion_tokens"] == 25
     assert resp_json["usage"]["subneutralize_telemetry"]["consensus_reached"] is True
+
+
+def test_chat_completions_multiturn():
+    engine = MockEngine()
+    app = create_app(engine, model_id="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B")
+    client = TestClient(app)
+
+    payload = {
+        "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+        "messages": [
+            {"role": "user", "content": "Hello!"},
+            {"role": "assistant", "content": "Hi there! How can I help?"},
+            {"role": "user", "content": "Write an addition function."}
+        ],
+        "stream": False
+    }
+
+    res = client.post("/v1/chat/completions", json=payload)
+    assert res.status_code == 200
+    resp_json = res.json()
+    assert "def add(a, b): return a + b" in resp_json["choices"][0]["message"]["content"]
 
 
 def test_chat_completions_streaming():
@@ -82,3 +108,4 @@ def test_chat_completions_streaming():
     assert res.status_code == 200
     assert "text/event-stream" in res.headers["content-type"]
     assert "data: [DONE]" in res.text
+
