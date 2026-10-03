@@ -4,17 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "subneutralize"
-version = "0.1.2"
-description = "Universal Parameter-Free Runtime Inference Governor for Autoregressive Reasoning Models"
+version = "0.1.3"
+description = "Latent Dynamical Consensus Governor for Autoregressive Reasoning Models"
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 authors = [
     { name = "Arnab Dutta" }
 ]
 keywords = [
-    "deepseek",
-    "reasoning",
+    "deepseek-r1",
+    "reasoning-models",
     "inference-optimization",
     "vllm",
     "test-time-compute",
@@ -25,7 +25,6 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -36,6 +35,17 @@ classifiers = [
 dependencies = [
     "torch>=2.0.0",
     "transformers>=4.40.0",
+]
+
+[project.optional-dependencies]
+serve = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "pydantic>=2.0.0",
+]
+test = [
+    "pytest>=7.0.0",
+    "httpx>=0.24.0",
 ]
 
 [project.scripts]

@@ -1,220 +1,163 @@
-# SubNeutralize: Universal Runtime Inference Governor for Reasoning Models
+# SubNeutralize: Latent Dynamical Inference Governor for Reasoning Models
 
 [![PyPI version](https://badge.fury.io/py/subneutralize.svg)](https://pypi.org/project/subneutralize/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22941619.svg)](https://doi.org/10.5281/zenodo.22941619)
 [![Paper PDF](https://img.shields.io/badge/Research%20Paper-PDF-red.svg)](paper/SubNeutralize_Paper.pdf)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
-[![NVIDIA A100](https://img.shields.io/badge/Hardware-NVIDIA%20A100--SXM4--40GB-76B900?logo=nvidia)](https://www.nvidia.com)
 
-> **SubNeutralize** is a parameter-free, scale-free runtime inference governor that eliminates the **"Overthinking Crisis"** in autoregressive reasoning models (DeepSeek-R1, Qwen, and frontier reasoning LLMs) by tracking latent trajectory dynamics and transitioning immediately upon reaching dynamical consensus equilibrium.
->
-> 📄 **Permanent Zenodo DOI:** [**https://doi.org/10.5281/zenodo.22941619**](https://doi.org/10.5281/zenodo.22941619)  
-> 📑 **Read Paper PDF in Repo:** [**paper/SubNeutralize_Paper.pdf**](paper/SubNeutralize_Paper.pdf)
+> **SubNeutralize** is a runtime inference governor for autoregressive reasoning models (DeepSeek-R1, Qwen-QwQ, and open reasoning LLMs). By tracking latent representation velocity and attractor dispersion in the mid-layer residual stream, it detects when algorithmic deduction is complete and transitions directly to answer emission with **100% KV-cache preservation**.
 
 ---
 
-## ⚡ The Breakthrough: 77.9% Compute Reduction on DeepSeek-R1-32B
+## 💡 The Core Problem: The Test-Time "Overthinking Trap"
 
-In up to 40% of reasoning tasks, models like **DeepSeek-R1** deduce the correct algorithmic solution within the first 80–120 tokens, but then enter an ungrounded monologue loop (*"Wait, let me double check..."*), burning 1,500+ tokens and 2.5 minutes before emitting code.
+Autoregressive reasoning models often solve the core algorithmic deduction within the first 80–150 tokens. However, without external calibration, they frequently enter extensive verification loops (*"Wait, let me double-check... but what if..."*), consuming hundreds of redundant tokens before generating the final answer.
 
-Evaluated on an **NVIDIA A100-SXM4-40GB** running `DeepSeek-R1-Distill-Qwen-32B` under an identical **1,500-token ceiling** for both Vanilla and SubNeutralize:
-* **77.9% Net Compute Reduction:** Total token consumption dropped from **5,698 tokens to 1,261 tokens**.
-* **4.51× Wall-Clock Speedup:** Response latency dropped from **596.1s to 132.3s** (from ~2.5 minutes down to ~25 seconds per query).
-* **100% Unit Test Pass Rate (4/4 PASS ✓):** Zero accuracy loss or syntax degradation on complex enterprise backend tasks.
-* **Zero External Scissoring:** Stopping occurs purely via internal dynamical consensus equilibrium.
-
----
-
-## 📊 Empirical Benchmarks (NVIDIA A100 SXM4)
-
-### Table 1: Per-Problem Enterprise Coding Benchmark
-
-| Problem ID | Problem Description | Vanilla Tokens (Latency) | SubNeutralize (Th + Co) | Token Savings | Latency Savings | Unit Test Result |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **PROB-01** | SQL Injection Sanitizer & Query Builder | 1,500t (156.2s) | 87t + 148t (24.6s) | **84.3%** | **84.2%** | **PASS ✓** |
-| **PROB-02** | Token Bucket Rate Limiter with Refill | 1,500t (157.0s) | 125t + 218t (35.9s) | **77.1%** | **77.1%** | **PASS ✓** |
-| **PROB-03** | JWT Claims & Expiry Validator | 1,198t (125.3s) | 92t + 136t (23.8s) | **81.0%** | **81.0%** | **PASS ✓** |
-| **PROB-04** | LRU Cache with Time-To-Live (TTL) | 1,500t (157.6s) | 101t + 354t (47.9s) | **69.7%** | **69.6%** | **PASS ✓** |
-
-### Table 2: Infrastructure ROI & Deployment Impact
-
-| Metric | Vanilla Baseline | SubNeutralize | Net Improvement |
-| :--- | :---: | :---: | :---: |
-| **Total Tokens Consumed** | 5,698 | **1,261** | **77.9% Compute Saved** |
-| **Total Inference Latency** | 596.1 s | **132.3 s** | **4.51× Faster** |
-| **Average Query Latency** | 149.0 s | **33.1 s** | **-115.9 s per query** |
-| **Verified Unit Tests Passed** | 4/4 | **4/4** | **100% Correctness** |
-| **Estimated GPU Bill / 1M Queries** | $3,800 USD | **$841 USD** | **-$2,959 USD per 1M queries** |
+SubNeutralize introduces a **non-destructive dynamical governor** that monitors the internal geometry of reasoning:
+1. **Attractor Basin Detection:** Monitors directional velocity $v_t = 1 - \cos(h_t, h_{t-1})$ and windowed trajectory dispersion at the cognitive midpoint layer (~50% model depth).
+2. **In-Flight KV Transition:** Upon dynamical consensus, it closes the reasoning phase (`</think>`) and primes the existing KV cache, continuing generation without costly re-tokenization.
+3. **Task-Agnostic:** Operates seamlessly across code generation, mathematical reasoning, and general prompt answering.
 
 ---
 
-## 💻 Quickstart: Connect to Cursor, VS Code, or Antigravity
-
-Nobody wants to type coding prompts into a bash terminal. SubNeutralize includes a built-in **OpenAI-compatible inference gateway** that plugs directly into your everyday development environment with real-time SSE streaming.
-
-```
-┌────────────────────────┐         ┌────────────────────────┐         ┌────────────────────────┐
-│  Cursor / VS Code IDE  │ ──────> │  SubNeutralize Gateway │ ──────> │  Local / Hosted Model  │
-│  (Cmd+K / Chat Sidebar)│ <────── │  (Layer-14 Governor)   │ <────── │  (DeepSeek-R1 / Qwen)  │
-└────────────────────────┘         └────────────────────────┘         └────────────────────────┘
-     Developer types                   Intercepts hidden states           Stops model the moment
-     naturally in IDE.                 & streams SSE tokens               solution stabilizes.
-                                       4.51x faster back to IDE.          Zero looping.
-```
+## 🚀 Quickstart
 
 ### 1. Installation
+
 ```bash
 pip install subneutralize
 ```
 
-### 2. Launch the Gateway
+For IDE gateway support (Cursor / VS Code Continue):
 ```bash
-# Starts the OpenAI-compatible gateway on http://localhost:8000/v1
-subneutralize serve --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
-
-# Or target larger models (7B, 14B, 32B) and custom ports:
-subneutralize serve --model deepseek-ai/DeepSeek-R1-Distill-Qwen-14B --port 8000
-```
-
-### 3. Connect Your IDE (Takes 30 Seconds)
-
-* **Cursor:**
-  * Open **Settings** $\rightarrow$ **Models** $\rightarrow$ **OpenAI API**.
-  * **Base URL:** `http://localhost:8000/v1`
-  * **API Key:** `subneutralize` *(any non-empty string)*
-  * **Model Name:** `deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B` *(or your loaded model)*
-  * Press `Cmd+K` or open the chat panel and code normally!
-
-* **VS Code (Continue / Cline / Roo Code):**
-  * In your extension config (`config.json`), set:
-    ```json
-    {
-      "models": [
-        {
-          "title": "SubNeutralize DeepSeek-R1",
-          "provider": "openai",
-          "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-          "apiBase": "http://localhost:8000/v1",
-          "apiKey": "subneutralize"
-        }
-      ]
-    }
-    ```
-
-* **Aider (CLI Pair Programmer):**
-  ```bash
-  aider --openai-api-base http://localhost:8000/v1 --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
-  ```
-
----
-
-## 📈 Real-Time Telemetry & Live Savings
-
-Every time your IDE requests code or an inline edit, the SubNeutralize gateway prints live telemetry to your terminal:
-
-```text
- [IDE STREAM] Prompt: 42 words | Generated: 148 tok | Thinking: 87 tok | Saved: ~1,265 tok (84.3%) | Latency: 2.14s (4.51x faster)
-```
-
-You can also run a side-by-side benchmark comparing unconstrained Vanilla DeepSeek-R1 against SubNeutralize anytime:
-```bash
-subneutralize --compare "Write a thread-safe token bucket rate limiter in Python"
+pip install "subneutralize[serve]"
 ```
 
 ---
 
-## 💰 The Economics: Why Compute Savings Matter for Open-Source
+### 2. Python SDK: 2-Line Integration
 
-A common misconception is: *"Open source weights are free, so why does token efficiency matter?"*
-
-**Model weights are free to download; running inference is 100% NOT free.**
-
-1. **Hardware & GPU Cloud Costs:**
-   * Renting an **NVIDIA A100 SXM4** costs **$2.50–$3.50/hour** (~$1,800–$2,500/month per GPU).
-   * Buying an enterprise GPU workstation costs **$15,000–$35,000+**.
-   * **The Throughput Bottleneck:** When an unconstrained reasoning model spends 1,500 tokens (120–150 seconds) overthinking, **one GPU can only serve ~24 queries per hour**.
-   * With SubNeutralize cutting overthinking to ~100–200 tokens (25s, 4.51× speedup), that same GPU can serve **140+ queries per hour**, reducing required GPU instances by **~78%**.
-2. **Hosted Inference APIs (Together, Fireworks, Groq, DeepSeek API):**
-   * Managed providers charge **strictly per output token** (including internal reasoning tokens).
-   * Overthinking burns 1,200+ redundant tokens on internal monologue. SubNeutralize cuts output tokens by **~78%**, directly slashing monthly API bills by **~78%**.
-3. **Developer Flow State (Human Latency):**
-   * Developers in Cursor or VS Code hate waiting 2 minutes for code completion. SubNeutralize drops wait time from 150 seconds down to 25 seconds.
-
-> **Note on Compatibility:** SubNeutralize inspects intermediate transformer activations (residual stream at Layer 14). It works with **all open-weight reasoning models** (DeepSeek-R1, Qwen-2.5, LLaMA-3). It cannot run on closed proprietary APIs (Claude 3.5 Sonnet, GPT-4o) because commercial API vendors do not expose hidden-layer activations.
-
----
-
-## 🐍 Python SDK Usage
-
-If you prefer programmatic integration in your own Python backend or pipeline:
-
-### Direct Engine Generation
 ```python
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from subneutralize import SubNeutralize
 
 # 1. Load any open-weight reasoning model
-model_id = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+model_id = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" # Or 7B / 14B / 32B
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.bfloat16, device_map="auto")
 
-# 2. Wrap with SubNeutralize (automatically hooks the cognitive midpoint layer)
-engine = SubNeutralize(model, tokenizer)
+# 2. Wrap with SubNeutralize (automatically resolves cognitive bottleneck layer)
+governor = SubNeutralize(model, tokenizer)
 
-# 3. Generate governed response on ANY prompt
-output = engine.generate("Write a thread-safe token bucket rate limiter in Python:")
+# 3. Generate with real-time dynamical equilibrium tracking
+output = governor.generate("Write a thread-safe token bucket rate limiter in Python:")
 
-print(output.clean_code)
-print(f"Thinking Tokens: {output.thinking_tokens} | Code Tokens: {output.code_tokens}")
-print(f"Latency: {output.wall_clock_seconds:.1f}s | Consensus Reached: {output.consensus_reached}")
+print("--- Final Answer ---")
+print(output.clean_code if output.clean_code else output.answer)
+print(f"\nThinking Tokens: {output.thinking_tokens} | Answer Tokens: {output.answer_tokens}")
+print(f"Consensus Reached: {output.consensus_reached} at token {output.consensus_step}")
 ```
 
-### Drop-in `StoppingCriteria` for Existing HuggingFace Pipelines
+### 3. Drop-in Hugging Face `StoppingCriteria`
+
+Integrates directly with native `model.generate()` pipelines:
+
 ```python
-engine = SubNeutralize(model, tokenizer)
+governor = SubNeutralize(model, tokenizer)
 
 outputs = model.generate(
     **inputs,
     max_new_tokens=1500,
-    stopping_criteria=[engine.as_stopping_criteria()]
+    stopping_criteria=[governor.as_stopping_criteria()]
 )
 ```
 
 ---
 
-## 🔬 How It Works (The Mathematics)
-
-### 1. Latent Manifold Cosine Velocity
-SubNeutralize listens to residual representations at the model's cognitive bottleneck layer (situated at $\approx 50\%$ depth). At decoding step $t$, the directional velocity of the representation trajectory is:
-$$v_t = 1 - \frac{h_t \cdot h_{t-1}}{\|h_t\|_2 \|h_{t-1}\|_2}$$
-
-### 2. Dimension-Invariant Scale-Free Momentum Ratio ($R_t$)
-Because absolute velocity scales differently across model dimensions ($d=3584$ for 7B vs $d=5120$ for 32B), SubNeutralize normalizes instantaneous velocity against its own Exponential Moving Average (EMA):
-$$\text{EMA}_t(v) = \alpha v_t + (1 - \alpha) \text{EMA}_{t-1}(v), \quad \alpha = 0.10$$
-$$R_t = \frac{v_t}{\text{EMA}_t(v)}$$
-
-### 3. Consensus Equilibrium Condition
-Equilibrium is mathematically certified when:
-$$t \ge 60 \quad \text{and} \quad (R_t < 0.82 \quad \text{or} \quad v_t < 0.135)$$
-Once stabilized across a 2-token persistence debounce window, SubNeutralize cleanly transitions the model from internal monologue into greedy code emission.
-
----
-
-## 🧪 Running the Enterprise Benchmark
-
-Run the full 4-problem enterprise test suite (SQL Injection Sanitizer, Token Bucket Rate Limiter, JWT Validator, LRU Cache with TTL) locally:
+### 4. Interactive Terminal & Side-by-Side Comparison
 
 ```bash
-python -m subneutralize.benchmark
+# Single prompt execution with telemetry
+subneutralize "Explain why the square root of 2 is irrational"
+
+# Fair matched-budget comparison vs. unconstrained baseline
+subneutralize --compare "Write a thread-safe token bucket rate limiter in Python"
+
+# Interactive REPL
+subneutralize -i
 ```
 
 ---
 
+## 💻 IDE Gateway: Connect to Cursor, VS Code, or Antigravity
+
+SubNeutralize includes an **OpenAI-compatible inference gateway** with Server-Sent Events (SSE) streaming, allowing you to use governed reasoning directly inside Cursor, VS Code, and other developer tools:
+
+```bash
+subneutralize serve --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --port 8000
+```
+
+### IDE Configuration:
+* **Cursor:** Set OpenAI API Base URL to `http://localhost:8000/v1` (API key: `subneutralize`).
+* **VS Code (Continue / Cline):** Add model endpoint pointing to `http://localhost:8000/v1`.
+* **Aider:** `aider --openai-api-base http://localhost:8000/v1 --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B`
+
+---
+
+## 🔬 Mathematical Formulation
+
+### 1. Directional Cosine Velocity
+At decoding step $t$, the directional displacement of the hidden state $h_t$ at target layer $L_{\text{mid}}$ is computed via cosine distance:
+$$v_t = 1 - \frac{h_t \cdot h_{t-1}}{\|h_t\|_2 \|h_{t-1}\|_2}$$
+
+### 2. Dimension-Invariant Momentum Ratio
+Because latent norms scale across model parameter dimensions (e.g. $d=1536$ vs $d=5120$), instantaneous velocity is normalized against an Exponential Moving Average (EMA):
+$$\bar{v}_t = \alpha v_t + (1 - \alpha) \bar{v}_{t-1}, \quad \alpha = 0.12$$
+$$R_t = \frac{v_t}{\max(\bar{v}_t, 10^{-6})}$$
+
+### 3. Windowed Attractor Dispersion
+Over a sliding window $W = \{h_{t-K+1}, \dots, h_t\}$ with centroid $\bar{h}_W = \frac{1}{K}\sum_{i} h_i$, the geometric dispersion is:
+$$\rho_t = \frac{1}{K} \sum_{i=1}^{K} \left(1 - \frac{h_{t-i+1} \cdot \bar{h}_W}{\|h_{t-i+1}\|_2 \|\bar{h}_W\|_2}\right)$$
+
+### 4. Dynamical Consensus Criterion
+A consensus state is certified when:
+1. **Warmup Satisfied:** $t \ge T_{\text{warmup}}$ (allowing foundational reasoning deduction).
+2. **Trajectory Convergence:** $(v_t \le v_{\text{ceiling}} \land R_t \le R_{\text{threshold}}) \lor (\rho_t \le \rho_{\text{ceiling}} \land v_t \le 1.5 v_{\text{ceiling}})$.
+3. **Entropy Safety:** Shannon entropy $H(p_t) \le H_{\text{threshold}}$, ensuring the model is in a high-confidence prediction state.
+4. **Persistence Debounce:** The condition remains satisfied across $N_{\text{debounce}}$ consecutive tokens (default 3 tokens).
+
+---
+
+## 📊 Verification & Benchmarks
+
+Run the benchmark suite locally to evaluate unit test correctness and token savings:
+
+```bash
+# Verify reference test suites
+python -m subneutralize.benchmark
+
+# Run live model evaluation against matched baseline
+python -m subneutralize.benchmark --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+```
+
+### Protocol:
+* **Sampling Parity:** Both Vanilla and SubNeutralize are evaluated with identical chat templates, `temperature=0.6`, `top_p=0.95`, and equal generation ceilings.
+* **Non-Scissoring:** SubNeutralize transitions naturally to code synthesis upon dynamical consensus rather than imposing an artificial hard cutoff.
+
+---
+
+## 🌐 High-Throughput Serving (vLLM / SGLang Roadmap)
+
+SubNeutralize is designed to bridge mechanistic interpretability and high-throughput inference engines:
+* **Hugging Face / PyTorch:** Fully supported via `SubNeutralize` wrapper and `as_stopping_criteria()`.
+* **vLLM / SGLang:** Mid-layer hidden states can be accessed via custom worker hooks or logits processors. Upstream RFCs and custom runner integrations are under active development.
+
+---
+
 ## 📜 Citation
- 
-If you use SubNeutralize in your research or production systems, please cite:
+
 ```bibtex
 @article{dutta2026subneutralize,
   title={SubNeutralize: The Geometry of Reasoning and the Elimination of the Overthinking Trap},
@@ -226,4 +169,4 @@ If you use SubNeutralize in your research or production systems, please cite:
 ```
 
 ## 📄 License
-Apache-2.0 License. Free for commercial and research use.
+Apache-2.0 License. Free for research and commercial use.

@@ -41,7 +41,7 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
     app = FastAPI(
         title="SubNeutralize Inference Gateway",
         description="OpenAI-compatible inference server with runtime overthinking interception.",
-        version="0.1.2"
+        version="0.1.3"
     )
 
     app.add_middleware(
@@ -76,7 +76,7 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
 
     @app.post("/v1/chat/completions")
     async def chat_completions(req: ChatCompletionRequest):
-        # 1. Reconstruct prompt from messages (standard chat template style)
+        # 1. Reconstruct prompt from messages
         prompt_parts = []
         for msg in req.messages:
             if msg.role == "system":
@@ -102,15 +102,15 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
         cmpl_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
         created_time = int(time.time())
 
-        tokens_saved = max(0, 1500 - out.total_tokens)
-        pct_saved = (tokens_saved / 1500.0) * 100.0
+        # Select content: code if available, otherwise answer or full text
+        response_content = getattr(out, "clean_code", None) or getattr(out, "answer", None) or getattr(out, "text", "")
+        reasoning_content = getattr(out, "reasoning", "")
+        code_toks = getattr(out, "code_tokens", getattr(out, "answer_tokens", 0))
 
         # 3. Handle Streaming response for Cursor/IDE real-time typing
         if req.stream:
-            print(f" [IDE STREAM] Prompt: {len(prompt.split())} words | Generated: {out.code_tokens} tok | Thinking: {out.thinking_tokens} tok | Saved: ~{tokens_saved} tok ({pct_saved:.1f}%) | Latency: {out.wall_clock_seconds:.2f}s")
             async def event_generator():
-                # Stream the clean output in chunked tokens
-                words = out.clean_code.split(" ")
+                words = response_content.split(" ")
                 for i, word in enumerate(words):
                     chunk_text = word if i == len(words) - 1 else word + " "
                     chunk_payload = {
@@ -147,9 +147,14 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
 
             return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-        print(f" [IDE SYNC] Prompt: {len(prompt.split())} words | Generated: {out.code_tokens} tok | Thinking: {out.thinking_tokens} tok | Saved: ~{tokens_saved} tok ({pct_saved:.1f}%) | Latency: {out.wall_clock_seconds:.2f}s")
-
         # 4. Standard Non-Streaming JSON Response
+        message_data = {
+            "role": "assistant",
+            "content": response_content
+        }
+        if reasoning_content:
+            message_data["reasoning_content"] = reasoning_content
+
         return {
             "id": cmpl_id,
             "object": "chat.completion",
@@ -158,16 +163,13 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
             "choices": [
                 {
                     "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": out.clean_code
-                    },
+                    "message": message_data,
                     "finish_reason": "stop"
                 }
             ],
             "usage": {
                 "prompt_tokens": len(prompt.split()),
-                "completion_tokens": out.code_tokens,
+                "completion_tokens": code_toks,
                 "total_tokens": out.total_tokens,
                 "subneutralize_telemetry": {
                     "thinking_tokens": out.thinking_tokens,

@@ -1,6 +1,6 @@
 """
 Official Enterprise Coding Benchmark Suite for SubNeutralize.
-Replicates the 32B empirical evaluation on NVIDIA A100 SXM4.
+Evaluates accuracy and token efficiency with matched-budget sampling parity.
 """
 
 import sys
@@ -14,7 +14,7 @@ try:
 except ImportError:
     _HAS_TORCH = False
 
-from .governor import extract_clean_code
+from .governor import extract_clean_code, extract_clean_answer
 
 
 BENCHMARK_SUITE: List[Dict[str, Any]] = [
@@ -99,15 +99,15 @@ BENCHMARK_SUITE: List[Dict[str, Any]] = [
 
             # Expired beyond leeway
             try:
-                validate_jwt_claims({"sub": "u", "exp": now - 100}, ["sub"], leeway_seconds=30, current_time=now)
-                assert False, "Failed to catch expired token"
+                validate_jwt_claims({"sub": "12345", "exp": now - 120}, ["sub"], leeway_seconds=60, current_time=now)
+                assert False, "Failed to reject expired token"
             except ValueError:
                 pass
 
-            # Missing required claim
+            # Missing claim
             try:
-                validate_jwt_claims({"exp": now + 300}, ["sub", "role"], current_time=now)
-                assert False, "Failed to catch missing claim"
+                validate_jwt_claims({"exp": now + 300}, ["sub"], current_time=now)
+                assert False, "Failed to reject missing claim"
             except ValueError:
                 pass
         """),
@@ -118,66 +118,59 @@ BENCHMARK_SUITE: List[Dict[str, Any]] = [
         "prompt": textwrap.dedent("""\
             Implement a Python class `TTLCache`:
             - `__init__(self, maxsize: int, default_ttl_seconds: float)`
-            - `set(self, key, value, ttl: float = None)`: stores key-value pair with TTL. If size exceeds maxsize, evicts least recently accessed unexpired item.
-            - `get(self, key, default = None)`: returns value if key exists and has not expired, and updates its LRU access order. Returns default if expired or missing.
-            - `cleanup(self) -> int`: removes all expired keys and returns count of removed keys.
+            - `set(self, key, value, ttl: float = None) -> None`: store key/value with custom or default TTL. If cache exceeds maxsize, evict least recently used non-expired entry.
+            - `get(self, key, default=None) -> Any`: return value if key exists and not expired, update LRU order; else default.
+            - `cleanup(self) -> int`: purge all currently expired entries, returning the count of purged items.
             Write only the code inside ```python ... ``` fences.
         """),
         "test": textwrap.dedent("""\
             import time
             cache = TTLCache(maxsize=2, default_ttl_seconds=1.0)
-            cache.set("a", 100)
-            cache.set("b", 200)
-            assert cache.get("a") == 100
-            cache.set("c", 300) # Evicts 'b' because 'a' was recently accessed
+            cache.set("a", 1)
+            cache.set("b", 2)
+            assert cache.get("a") == 1
+            cache.set("c", 3) # Should evict "b" since "a" was recently read
             assert cache.get("b") is None
-            assert cache.get("c") == 300
-
-            time.sleep(1.1) # Wait for expiration
+            assert cache.get("a") == 1
+            assert cache.get("c") == 3
+            time.sleep(1.1)
             assert cache.get("a") is None
-            cleaned = cache.cleanup()
-            assert cleaned >= 1
+            purged = cache.cleanup()
+            assert purged >= 1
         """),
     }
 ]
 
 
-def run_code_test(code_text: str, test_snippet: str) -> Tuple[bool, str]:
-    """Executes generated code in an isolated environment against test assertions."""
-    code = extract_clean_code(code_text)
-    env: Dict[str, Any] = {}
+def run_code_test(code_snippet: str, test_code: str) -> Tuple[bool, str]:
+    """Safely executes candidate code against problem unit tests in an isolated namespace."""
+    exec_globals: Dict[str, Any] = {}
     try:
-        exec(compile(code, "<agent_solution>", "exec"), env)
-        exec(compile(test_snippet, "<unit_test>", "exec"), env)
+        exec(code_snippet, exec_globals)
+        exec(test_code, exec_globals)
         return True, "PASSED"
-    except AssertionError as e:
-        return False, f"ASSERTION FAIL: {e}"
     except Exception as e:
-        return False, f"{type(e).__name__}: {str(e)[:80]}"
+        return False, f"{type(e).__name__}: {str(e)}"
 
 
-REFERENCE_SOLUTIONS = {
-    "PROB-01": textwrap.dedent("""
+REFERENCE_SOLUTIONS: Dict[str, str] = {
+    "PROB-01": textwrap.dedent(r"""
         import re
 
         def build_secure_query(table: str, filters: dict, allowed_columns: list) -> str:
-            if not re.match(r"^[A-Za-z0-9_]+$", table):
+            if not re.match(r'^[A-Za-z0-9_]+$', table):
                 raise ValueError("Invalid table name")
             for col in filters.keys():
                 if col not in allowed_columns:
-                    raise ValueError(f"Column {col} not permitted")
-            
-            danger_patterns = ["' OR '1'='1", "1=1", "--", "/*", "UNION SELECT"]
-            for val in filters.values():
-                val_str = str(val).upper()
-                for pat in danger_patterns:
-                    if pat in val_str:
-                        raise ValueError(f"Malicious pattern detected: {pat}")
-            
-            sorted_cols = sorted(filters.keys())
-            clauses = [f"{col} = %s" for col in sorted_cols]
-            where_sql = " AND ".join(clauses)
-            return f"SELECT * FROM {table} WHERE {where_sql}"
+                    raise ValueError(f"Disallowed column: {col}")
+            clauses = []
+            for col in sorted(filters.keys()):
+                val = str(filters[col])
+                if re.search(r"('|--|/\*|1=1|UNION\s+SELECT)", val, re.IGNORECASE):
+                    raise ValueError(f"Injection detected in column {col}")
+                clauses.append(f"{col} = %s")
+            where = " AND ".join(clauses)
+            return f"SELECT * FROM {table} WHERE {where}" if where else f"SELECT * FROM {table}"
     """).strip(),
     "PROB-02": textwrap.dedent("""
         import time
@@ -185,16 +178,16 @@ REFERENCE_SOLUTIONS = {
 
         class TokenBucketLimiter:
             def __init__(self, capacity: int, refill_rate: float):
-                self.capacity = capacity
-                self.refill_rate = refill_rate
-                self.tokens = float(capacity)
+                self.capacity = float(capacity)
+                self.refill_rate = float(refill_rate)
+                self.tokens = self.capacity
                 self.last_refill = time.time()
                 self.lock = threading.Lock()
 
             def _refill(self):
                 now = time.time()
                 elapsed = now - self.last_refill
-                self.tokens = min(float(self.capacity), self.tokens + elapsed * self.refill_rate)
+                self.tokens = min(self.capacity, self.tokens + elapsed * self.refill_rate)
                 self.last_refill = now
 
             def allow_request(self, tokens: int = 1) -> bool:
@@ -287,15 +280,16 @@ def main():
     parser = argparse.ArgumentParser(description="SubNeutralize Enterprise Benchmark Suite")
     parser.add_argument("--model", type=str, default=None, help="Hugging Face model ID to evaluate (e.g. deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B)")
     parser.add_argument("--device", type=str, default=default_dev, help="Device for execution")
+    parser.add_argument("--max-tokens", type=int, default=1200, help="Maximum token ceiling per task")
     args = parser.parse_args()
 
-    print("\n" + "=" * 80)
-    print("      SUBNEUTRALIZE ENTERPRISE REASONING BENCHMARK SUITE (A100 SPEC)      ")
-    print("=" * 80)
+    print("\n" + "=" * 90)
+    print("      SUBNEUTRALIZE ENTERPRISE BENCHMARK SUITE (MATCHED-BUDGET PROTOCOL)      ")
+    print("=" * 90)
 
     if args.model is None:
-        print("\n[*] Running self-validation on 4 Enterprise Problem Test Suites...")
-        print("-" * 80)
+        print("\n[*] Running self-validation on reference solution unit test suites...")
+        print("-" * 90)
         all_passed = True
         for prob in BENCHMARK_SUITE:
             pid = prob["id"]
@@ -306,9 +300,9 @@ def main():
             print(f"  {status} {pid}: {title} -> {msg}")
             if not passed:
                 all_passed = False
-        print("-" * 80)
+        print("-" * 90)
         if all_passed:
-            print("[SUCCESS] All 4 enterprise unit test suites verified with 100% correctness.")
+            print("[SUCCESS] All reference unit test suites verified with 100% correctness.")
             print("\nTo benchmark a live model with SubNeutralize vs Vanilla, run:")
             print("  python -m subneutralize.benchmark --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B\n")
         else:
@@ -320,40 +314,70 @@ def main():
         from .engine import SubNeutralize
 
         print(f"\n[*] Loading model: {args.model} on {args.device}...")
+        dtype = torch.bfloat16 if args.device == "cuda" else torch.float32
         tokenizer = AutoTokenizer.from_pretrained(args.model)
-        model = AutoModelForCausalLM.from_pretrained(
-            args.model,
-            device_map=args.device,
-            torch_dtype=torch.bfloat16 if args.device == "cuda" else torch.float32
-        )
+        model = AutoModelForCausalLM.from_pretrained(args.model, device_map=args.device, torch_dtype=dtype)
         governor = SubNeutralize(model, tokenizer)
 
-        print("\n" + "=" * 90)
-        print(f"{'ID':<8} | {'VANILLA TOKENS':<16} | {'SUBNEUTRALIZE':<16} | {'SAVINGS':<10} | {'UNIT TEST':<12}")
-        print("=" * 90)
+        print("\n" + "=" * 105)
+        print(f"{'ID':<8} | {'VANILLA TOK (TEST)':<22} | {'GOV TOK (TEST)':<20} | {'SAVINGS':<10} | {'HALT STEP':<12} | {'SPEEDUP':<10}")
+        print("=" * 105)
+
+        total_v_tokens = 0
+        total_g_tokens = 0
+        total_v_time = 0.0
+        total_g_time = 0.0
 
         for prob in BENCHMARK_SUITE:
             pid = prob["id"]
             prompt = prob["prompt"]
-            inputs = tokenizer(prompt, return_tensors="pt").to(args.device)
+            formatted_prompt = governor._format_prompt(prompt)
+            inputs = tokenizer(formatted_prompt, return_tensors="pt").to(args.device)
             prompt_len = inputs.input_ids.shape[-1]
 
-            # 1. Vanilla
+            # 1. Fair Vanilla Baseline (matched sampling and chat template)
+            t0 = time.time()
             with torch.no_grad():
-                out_v = model.generate(**inputs, max_new_tokens=1024)
+                out_v = model.generate(
+                    **inputs,
+                    max_new_tokens=args.max_tokens,
+                    temperature=0.6,
+                    top_p=0.95,
+                    do_sample=True,
+                    pad_token_id=tokenizer.eos_token_id or tokenizer.pad_token_id,
+                )
+            t_v = time.time() - t0
             v_tok = out_v.shape[-1] - prompt_len
+            v_text = tokenizer.decode(out_v[0, prompt_len:], skip_special_tokens=True)
+            v_passed, _ = run_code_test(extract_clean_code(v_text), prob["test"])
+            v_status = "PASS" if v_passed else "FAIL"
 
-            # 2. SubNeutralize
-            out_g = governor.generate(prompt, max_new_tokens=1024)
+            # 2. SubNeutralize Dynamical Governor
+            t0 = time.time()
+            out_g = governor.generate(prompt, max_new_tokens=args.max_tokens, temperature=0.6, top_p=0.95)
+            t_g = time.time() - t0
             g_tok = out_g.total_tokens
+            g_passed, _ = run_code_test(out_g.clean_code, prob["test"])
+            g_status = "PASS" if g_passed else "FAIL"
 
-            passed, _ = run_code_test(out_g.clean_code, prob["test"])
-            status = "PASS" if passed else "FAIL"
             savings = (1.0 - g_tok / max(1, v_tok)) * 100.0
+            speedup = t_v / max(1e-4, t_g)
+            halt_str = f"Tok {out_g.consensus_step}" if out_g.consensus_reached else "Natural"
 
-            print(f"{pid:<8} | {v_tok:<16} | {g_tok:<16} | {savings:>7.1f}% | {status:<12}")
+            total_v_tokens += v_tok
+            total_g_tokens += g_tok
+            total_v_time += t_v
+            total_g_time += t_g
 
-        print("=" * 90 + "\n")
+            v_col = f"{v_tok}t ({v_status})"
+            g_col = f"{g_tok}t ({g_status})"
+
+            print(f"{pid:<8} | {v_col:<22} | {g_col:<20} | {savings:>7.1f}% | {halt_str:<12} | {speedup:>7.2f}x")
+
+        print("=" * 105)
+        overall_savings = (1.0 - total_g_tokens / max(1, total_v_tokens)) * 100.0
+        overall_speedup = total_v_time / max(1e-4, total_g_time)
+        print(f"OVERALL SUMMARY: {total_v_tokens}t -> {total_g_tokens}t ({overall_savings:.1f}% saved) | {overall_speedup:.2f}x average speedup\n")
 
 
 if __name__ == "__main__":

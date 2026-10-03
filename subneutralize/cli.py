@@ -18,15 +18,15 @@ except ImportError:
 def print_banner():
     banner = """
 ================================================================================
-  SubNeutralize: Scale-Free Runtime Inference Governor for Reasoning Models
-  Eliminating the Overthinking Crisis | 77.9% Compute Reduction
+  SubNeutralize: Latent Dynamical Inference Governor for Reasoning Models
+  Attractor Basin Detection | In-Flight KV-Preserving Consensus Transition
 ================================================================================
 """
     print(banner.strip() + "\n")
 
 
 def run_prompt_comparison(model_id: str, prompt: str, device: str, max_tokens: int = 1024):
-    """Runs a live side-by-side comparison of Vanilla reasoning vs SubNeutralize."""
+    """Runs a fair, matched-budget side-by-side comparison of Vanilla reasoning vs SubNeutralize."""
     from transformers import AutoModelForCausalLM, AutoTokenizer
     from .engine import SubNeutralize
 
@@ -36,22 +36,33 @@ def run_prompt_comparison(model_id: str, prompt: str, device: str, max_tokens: i
     model = AutoModelForCausalLM.from_pretrained(model_id, device_map=device, torch_dtype=dtype)
     governor = SubNeutralize(model, tokenizer)
 
+    # Use formatted chat prompt for both runs
+    formatted_prompt = governor._format_prompt(prompt)
+
     print(f"\n[PROMPT]: {prompt}\n")
     print("-" * 80)
     print("[1/2] Running Vanilla Baseline (Unconstrained Reasoning)...")
-    inputs = tokenizer(prompt, return_tensors="pt").to(device)
+    inputs = tokenizer(formatted_prompt, return_tensors="pt").to(device)
     prompt_len = inputs.input_ids.shape[-1]
 
     t0 = time.time()
     with torch.no_grad():
-        out_v = model.generate(**inputs, max_new_tokens=max_tokens)
+        out_v = model.generate(
+            **inputs,
+            max_new_tokens=max_tokens,
+            temperature=0.6,
+            top_p=0.95,
+            do_sample=True,
+            pad_token_id=tokenizer.eos_token_id or tokenizer.pad_token_id,
+        )
     t_vanilla = time.time() - t0
     v_tokens = out_v.shape[-1] - prompt_len
+    vanilla_text = tokenizer.decode(out_v[0, prompt_len:], skip_special_tokens=True)
     print(f"  -> Vanilla generated {v_tokens} tokens in {t_vanilla:.2f}s")
 
     print("\n[2/2] Running SubNeutralize (Dynamical Consensus Governor)...")
     t0 = time.time()
-    out_gov = governor.generate(prompt, max_new_tokens=max_tokens)
+    out_gov = governor.generate(prompt, max_new_tokens=max_tokens, temperature=0.6, top_p=0.95)
     t_gov = time.time() - t0
 
     savings = (1.0 - out_gov.total_tokens / max(1, v_tokens)) * 100.0
@@ -64,16 +75,18 @@ def run_prompt_comparison(model_id: str, prompt: str, device: str, max_tokens: i
     print("-" * 80)
     print(f"  {'Tokens Consumed':<25} | {v_tokens:<18} | {out_gov.total_tokens:<18} | {savings:>6.1f}% Saved")
     print(f"  {'Inference Latency':<25} | {t_vanilla:<16.2f}s | {t_gov:<16.2f}s | {speedup:>6.2f}x Faster")
-    print(f"  {'Consensus Detected':<25} | {'N/A (Cycled)':<18} | {f'Token {out_gov.consensus_step}':<18} | {'Early Halt':<15}")
+    consensus_str = f"Token {out_gov.consensus_step}" if out_gov.consensus_reached else "Natural </think>"
+    print(f"  {'Consensus Detected':<25} | {'N/A (Unconstrained)':<18} | {consensus_str:<18} | {'Early Halt' if out_gov.consensus_reached else 'Natural End':<15}")
     print("-" * 80)
 
-    print("\n--- [Clean Extracted Code / Solution] ---")
-    print(out_gov.clean_code)
+    print("\n--- [SubNeutralize Output] ---")
+    display_content = out_gov.clean_code if out_gov.clean_code else out_gov.answer
+    print(display_content or out_gov.text)
     print("-" * 80 + "\n")
 
 
 def run_governed_prompt(model_id: str, prompt: str, device: str, max_tokens: int = 1024):
-    """Runs single governed prompt and prints clean code with telemetry."""
+    """Runs single governed prompt and prints answer with telemetry."""
     from transformers import AutoModelForCausalLM, AutoTokenizer
     from .engine import SubNeutralize
 
@@ -92,13 +105,14 @@ def run_governed_prompt(model_id: str, prompt: str, device: str, max_tokens: int
     print("                     SUBNEUTRALIZE EXECUTION SUMMARY                     ")
     print("=" * 80)
     print(f"  * Thinking Tokens:      {out.thinking_tokens}")
-    print(f"  * Code/Answer Tokens:   {out.code_tokens}")
+    print(f"  * Answer Tokens:        {out.answer_tokens}")
     print(f"  * Total Tokens:         {out.total_tokens}")
     print(f"  * Consensus Reached:    {out.consensus_reached} (at token {out.consensus_step})")
     print(f"  * Latency:              {out.wall_clock_seconds:.2f}s")
     print("=" * 80)
     print("\n--- Output ---\n")
-    print(out.clean_code)
+    display_content = out.clean_code if out.clean_code else out.answer
+    print(display_content or out.text)
     print("\n" + "=" * 80 + "\n")
 
 
@@ -127,9 +141,10 @@ def run_interactive_repl(model_id: str, device: str):
             print("\nThinking with real-time dynamical governor...")
             out = governor.generate(prompt)
 
-            print(f"\n[Consensus at token {out.consensus_step} | Total: {out.total_tokens}t | {out.wall_clock_seconds:.2f}s]")
+            print(f"\n[Consensus: {out.consensus_reached} at token {out.consensus_step} | Total: {out.total_tokens}t | {out.wall_clock_seconds:.2f}s]")
             print("-" * 60)
-            print(out.clean_code)
+            display_content = out.clean_code if out.clean_code else out.answer
+            print(display_content or out.text)
             print("-" * 60 + "\n")
         except KeyboardInterrupt:
             print("\nInterrupted. Exiting...")
@@ -142,7 +157,7 @@ def main():
     default_dev = "cuda" if (_HAS_TORCH and torch.cuda.is_available()) else "cpu"
     parser = argparse.ArgumentParser(
         prog="subneutralize",
-        description="SubNeutralize: Scale-Free Runtime Inference Governor for Reasoning Models"
+        description="SubNeutralize: Latent Dynamical Inference Governor for Reasoning Models"
     )
     parser.add_argument("command_or_prompt", nargs="?", default=None, help="'serve' to launch OpenAI gateway for Cursor/VS Code, or prompt to govern")
     parser.add_argument("--model", type=str, default="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B", help="Model ID (default: deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B)")
@@ -151,7 +166,7 @@ def main():
     parser.add_argument("--port", type=int, default=8000, help="Gateway port for serve mode (default: 8000)")
     parser.add_argument("--serve", action="store_true", help="Launch OpenAI-compatible local proxy for Cursor / IDEs")
     parser.add_argument("--compare", action="store_true", help="Run head-to-head comparison vs. unconstrained Vanilla baseline")
-    parser.add_argument("--benchmark", action="store_true", help="Run the official enterprise 4-problem test suite")
+    parser.add_argument("--benchmark", action="store_true", help="Run verification benchmark suite")
     parser.add_argument("--interactive", "-i", action="store_true", help="Launch interactive REPL session")
 
     args = parser.parse_args()

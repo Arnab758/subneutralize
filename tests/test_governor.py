@@ -1,5 +1,5 @@
 """
-Unit tests for SubNeutralize Scale-Free Dynamical Governor and Code Extraction.
+Unit tests for SubNeutralize Scale-Free Dynamical Governor, Engine, and Text Extraction.
 """
 
 import pytest
@@ -9,8 +9,12 @@ from subneutralize import (
     ScaleFreeDynamicalGovernor,
     ConsensusEntropyGovernor,
     SubNeutralize,
+    GovernedOutput,
     extract_clean_code,
+    extract_clean_answer,
+    extract_reasoning_and_answer,
 )
+from subneutralize.engine import sample_next_token
 
 
 class MockLayer(nn.Module):
@@ -51,8 +55,9 @@ def test_custom_target_layer():
 def test_scale_free_momentum_tracking():
     gov = ScaleFreeDynamicalGovernor(
         min_warmup_tokens=5,
-        consensus_ratio_threshold=0.82,
-        velocity_ceiling=0.135,
+        consensus_ratio_threshold=0.85,
+        velocity_ceiling=0.15,
+        dispersion_ceiling=0.10,
         debounce_tokens=2,
     )
     
@@ -74,12 +79,10 @@ def test_scale_free_momentum_tracking():
     assert gov.ema_velocity is not None
 
     # 3. Step 5+: Converging trajectory into attractor basin (small perturbation)
-    # Feed stabilized vectors to satisfy debounce requirement (debounce_tokens=2)
     h_stable = torch.randn(1, 64)
     reached = False
-    for _ in range(10):
-        # Stable trajectory -> low cosine distance
-        h_next = h_stable + 0.001 * torch.randn(1, 64)
+    for _ in range(12):
+        h_next = h_stable + 0.0005 * torch.randn(1, 64)
         if gov.update(h_next):
             reached = True
             break
@@ -87,6 +90,40 @@ def test_scale_free_momentum_tracking():
 
     assert reached is True
     assert gov.consensus_token is not None
+
+
+def test_batched_governor_update():
+    gov = ScaleFreeDynamicalGovernor(min_warmup_tokens=2, debounce_tokens=1)
+    
+    # Pass batch size 4
+    h_init = torch.randn(4, 64)
+    res1 = gov.update(h_init)
+    assert isinstance(res1, torch.Tensor)
+    assert res1.shape == (4,)
+    assert not res1.any()
+
+    # Pass second step
+    h_next = h_init + 0.0001 * torch.randn(4, 64)
+    res2 = gov.update(h_next)
+    assert isinstance(res2, torch.Tensor)
+    assert res2.shape == (4,)
+
+
+def test_entropy_safety_guard():
+    gov = ScaleFreeDynamicalGovernor(
+        min_warmup_tokens=2,
+        entropy_threshold=1.0,
+        debounce_tokens=1
+    )
+    h0 = torch.randn(1, 64)
+    gov.update(h0)
+
+    # Low velocity but very high entropy (uniform logits over 1000 vocab)
+    h1 = h0 + 0.0001 * torch.randn(1, 64)
+    high_entropy_logits = torch.zeros(1, 1000) # uniform distribution -> entropy = ln(1000) ~ 6.9
+    res = gov.update(h1, logits=high_entropy_logits)
+    # Should NOT stop because model is in high perplexity / confusion
+    assert res is False
 
 
 def test_extract_clean_code():
@@ -106,17 +143,44 @@ def test_extract_clean_code():
     assert clean_code == raw_code
 
 
+def test_extract_reasoning_and_answer():
+    full_output = "<think>\nLet's verify step 1.\nStep 1 is correct.\n</think>\nThe answer is 42."
+    reasoning, answer = extract_reasoning_and_answer(full_output)
+    assert "Let's verify step 1" in reasoning
+    assert answer == "The answer is 42."
+
+    # Test clean answer extraction
+    clean_ans = extract_clean_answer(full_output)
+    assert clean_ans == "The answer is 42."
+
+
+def test_sample_next_token():
+    logits = torch.randn(1, 50)
+    # Greedy (temp = 0)
+    t_greedy = sample_next_token(logits, temperature=0.0)
+    assert t_greedy.item() == torch.argmax(logits, dim=-1).item()
+
+    # Sample with temperature and top_p
+    t_sampled = sample_next_token(logits, temperature=0.7, top_p=0.9)
+    assert 0 <= t_sampled.item() < 50
+
+
 def test_as_stopping_criteria():
     model = MockTransformer(num_layers=16, hidden_dim=32)
     engine = SubNeutralize(model, tokenizer=None, warmup_tokens=2)
     criteria = engine.as_stopping_criteria()
     assert callable(criteria)
     
-    # Simulate hook trigger and criteria evaluation
+    # Simulate hook trigger and criteria evaluation for single batch
     engine._current_hidden = torch.randn(1, 32)
     res = criteria(torch.tensor([[1, 2]]))
     assert res is False
     
+    # Batched criteria evaluation
+    engine._current_hidden = torch.randn(2, 32)
+    res_batch = criteria(torch.tensor([[1, 2], [3, 4]]))
+    assert isinstance(res_batch, torch.Tensor)
+    assert res_batch.shape == (2,)
+
     engine.detach()
     assert engine._hook_handle is None
-
