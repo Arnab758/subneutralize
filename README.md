@@ -30,7 +30,14 @@ SubNeutralize can be deployed in three distinct modes depending on your workflow
 Run SubNeutralize on your GPU server hosting an open-source model. It exposes a standard `/v1/chat/completions` endpoint with SSE streaming that intercepts reasoning loops before streaming back to your IDE:
 
 ```bash
+# Launch directly via Python CLI:
 subneutralize serve --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --port 8000
+
+# Or launch 1-click GPU container via Docker Compose:
+docker compose up -d
+
+# Open a side terminal for real-time telemetry:
+subneutralize top
 ```
 
 #### IDE Configuration:
@@ -95,6 +102,9 @@ subneutralize "Explain why the square root of 2 is irrational"
 
 # Interactive REPL session
 subneutralize -i
+
+# Real-time terminal telemetry monitor (live KV savings & Lyapunov potential)
+subneutralize top
 ```
 
 ---
