@@ -259,3 +259,54 @@ def extract_clean_answer(generated_text: str) -> str:
     if answer:
         return answer
     return generated_text.strip()
+
+
+# ==============================================================================
+# v0.2.0 MANIFOLD DYNAMICAL GOVERNOR & LOGITS HOOKS
+# ==============================================================================
+from subneutralize.manifold import (
+    OnlineManifoldStat,
+    PromptSubspaceGovernor,
+    SubNeutralizeManifoldProcessor,
+)
+
+
+class ManifoldDynamicalGovernor:
+    """
+    v0.2.0 Manifold Dynamical Consensus Governor.
+    Governs Layer (L-2) residual stream activations via:
+    1. Thin-SVD Prompt Subspace Projection (P_perp = I - V_bias V_bias^T)
+    2. Dimensionless Lyapunov Potential (Phi_t = z_erank + z_vel + z_ent - z_conf)
+    3. Poincaré Limit-Cycle Orbit Recurrence (rho_orbit)
+    """
+
+    def __init__(
+        self,
+        model: Any,
+        tokenizer: Any,
+        think_end_token_id: Optional[int] = None,
+        eos_token_id: Optional[int] = None,
+        svd_rank: int = 4,
+    ):
+        self.model = model
+        self.tokenizer = tokenizer
+        self.svd_rank = svd_rank
+
+        if think_end_token_id is None:
+            toks = tokenizer.encode("</think>", add_special_tokens=False)
+            self.think_end_token_id = toks[-1] if toks else getattr(tokenizer, "eos_token_id", 0)
+        else:
+            self.think_end_token_id = think_end_token_id
+
+        self.eos_token_id = eos_token_id or getattr(tokenizer, "eos_token_id", 0)
+
+    def as_logits_processor(self) -> SubNeutralizeManifoldProcessor:
+        """Returns a HuggingFace / vLLM compatible LogitsProcessor."""
+        return SubNeutralizeManifoldProcessor(
+            model=self.model,
+            tokenizer=self.tokenizer,
+            think_end_token_id=self.think_end_token_id,
+            eos_token_id=self.eos_token_id,
+            svd_rank=self.svd_rank,
+        )
+

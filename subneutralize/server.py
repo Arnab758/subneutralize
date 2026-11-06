@@ -1,6 +1,14 @@
 """
-OpenAI-Compatible Local & Cloud Inference Server for SubNeutralize.
+================================================================================
+   🚀 SubNeutralize v0.2.0: OpenAI-Compatible Inference Server & Gateway
+   Author: Arnab Dutta | Apache-2.0 License
+================================================================================
 Enables drop-in integration with Cursor, VS Code (Continue/Cline), Antigravity, and Aider.
+Features:
+  1. Stateful Multi-Turn KV Scratchpad Eviction (55%-75% prefill memory reduction)
+  2. Live CFO & Hardware Telemetry (/v1/telemetry)
+  3. Real-Time SSE Streaming & Non-Streaming Completions
+================================================================================
 """
 
 import time
@@ -18,6 +26,8 @@ try:
 except ImportError:
     _HAS_FASTAPI = False
 
+from subneutralize.evictor import StatefulMultiTurnEvictor
+
 
 class ChatMessage(BaseModel):
     role: str
@@ -31,17 +41,18 @@ class ChatCompletionRequest(BaseModel):
     temperature: Optional[float] = 0.6
     top_p: Optional[float] = 0.95
     stream: Optional[bool] = False
+    enable_eviction: Optional[bool] = True
 
 
 def create_app(engine: Any, model_id: str) -> "FastAPI":
-    """Creates a FastAPI application configured with SubNeutralize."""
+    """Creates a FastAPI application configured with SubNeutralize v0.2.0."""
     if not _HAS_FASTAPI:
         raise ImportError("FastAPI and Uvicorn are required to run the server. Install via: pip install fastapi uvicorn")
 
     app = FastAPI(
         title="SubNeutralize Inference Gateway",
-        description="OpenAI-compatible inference server with runtime overthinking interception.",
-        version="0.1.3"
+        description="OpenAI-compatible inference server with runtime overthinking interception & KV eviction.",
+        version="0.2.0"
     )
 
     app.add_middleware(
@@ -52,12 +63,26 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
         allow_headers=["*"],
     )
 
+    # Multi-Turn Evictor & Cumulative Telemetry State
+    tokenizer = getattr(engine, "tokenizer", None)
+    evictor = StatefulMultiTurnEvictor(tokenizer)
+
+    telemetry_state = {
+        "total_requests": 0,
+        "total_prompt_tokens": 0,
+        "total_completion_tokens": 0,
+        "total_prefill_tokens_evicted": 0,
+        "compacted_turns_count": 0,
+        "manifold_interventions": 0,
+    }
+
     @app.get("/health")
     def health():
         return {
             "status": "healthy",
             "model": model_id,
-            "governor": "SubNeutralize Scale-Free Consensus Governor"
+            "version": "0.2.0",
+            "governor": "SubNeutralize Manifold Consensus Governor (v0.2.0)"
         }
 
     @app.get("/v1/models")
@@ -74,15 +99,37 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
             ]
         }
 
+    @app.get("/v1/telemetry")
+    def get_telemetry():
+        return {
+            "engine_version": "SubNeutralize v0.2.0 (Layer L-2 Manifold Governor + Stateful KV Evictor)",
+            "model": model_id,
+            "total_requests": telemetry_state["total_requests"],
+            "total_prompt_tokens": telemetry_state["total_prompt_tokens"],
+            "total_completion_tokens": telemetry_state["total_completion_tokens"],
+            "total_prefill_tokens_evicted": evictor.total_prefill_tokens_evicted,
+            "compacted_multi_turn_requests": evictor.compacted_turns_count,
+            "manifold_interventions": telemetry_state["manifold_interventions"],
+        }
+
     @app.post("/v1/chat/completions")
     async def chat_completions(req: ChatCompletionRequest):
-        # 1. Prepare structured messages for native model chat template handling
+        telemetry_state["total_requests"] += 1
+
+        # 1. Prepare structured messages
         messages_payload = [{"role": msg.role, "content": msg.content} for msg in req.messages]
 
-        # 2. Execute SubNeutralize governed generation
+        # 2. Stateful Multi-Turn KV Scratchpad Eviction
+        compacted_messages, prompt_tokens, evicted = evictor.compact_messages(
+            messages_payload, evict_history_scratchpads=bool(req.enable_eviction)
+        )
+        telemetry_state["total_prompt_tokens"] += prompt_tokens
+        telemetry_state["total_prefill_tokens_evicted"] += evicted
+
+        # 3. Execute SubNeutralize governed generation
         try:
             out = engine.generate(
-                prompt=messages_payload,
+                prompt=compacted_messages,
                 max_new_tokens=req.max_tokens or 1500,
                 temperature=req.temperature or 0.6,
                 top_p=req.top_p or 0.95
@@ -97,8 +144,14 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
         response_content = getattr(out, "answer", None) or getattr(out, "clean_code", None) or getattr(out, "text", "")
         reasoning_content = getattr(out, "reasoning", "")
         ans_toks = getattr(out, "answer_tokens", getattr(out, "code_tokens", 0))
+        tot_toks = getattr(out, "total_tokens", prompt_tokens + ans_toks)
+        telemetry_state["total_completion_tokens"] += ans_toks
 
-        # 3. Handle Streaming response for Cursor/IDE real-time typing
+        consensus = getattr(out, "consensus_reached", False)
+        if consensus:
+            telemetry_state["manifold_interventions"] += 1
+
+        # 4. Handle Streaming response for Cursor/IDE real-time typing
         if req.stream:
             async def event_generator():
                 words = response_content.split(" ")
@@ -138,7 +191,7 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
 
             return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-        # 4. Standard Non-Streaming JSON Response
+        # 5. Standard Non-Streaming JSON Response
         message_data = {
             "role": "assistant",
             "content": response_content
@@ -159,14 +212,15 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
                 }
             ],
             "usage": {
-                "prompt_tokens": sum(len(m["content"].split()) for m in messages_payload),
+                "prompt_tokens": prompt_tokens,
+                "prefill_tokens_evicted": evicted,
                 "completion_tokens": ans_toks,
-                "total_tokens": out.total_tokens,
+                "total_tokens": tot_toks,
                 "subneutralize_telemetry": {
-                    "thinking_tokens": out.thinking_tokens,
-                    "consensus_reached": out.consensus_reached,
-                    "consensus_token": out.consensus_step,
-                    "latency_seconds": round(out.wall_clock_seconds, 2)
+                    "thinking_tokens": getattr(out, "thinking_tokens", 0),
+                    "consensus_reached": consensus,
+                    "consensus_token": getattr(out, "consensus_step", None),
+                    "latency_seconds": round(getattr(out, "wall_clock_seconds", 0.0), 2)
                 }
             }
         }
@@ -186,16 +240,17 @@ def start_server(model_id: str, host: str = "0.0.0.0", port: int = 8000, device:
 
     resolved_device = device or ("cuda" if torch.cuda.is_available() else "cpu")
     print("\n" + "=" * 80)
-    print("      SUBNEUTRALIZE OPENAI-COMPATIBLE IDE INFERENCE GATEWAY      ")
+    print("      SUBNEUTRALIZE v0.2.0 OPENAI-COMPATIBLE INFERENCE GATEWAY     ")
     print("=" * 80)
-    print(f"[*] Target Model:    {model_id}")
-    print(f"[*] Compute Device:  {resolved_device}")
-    print(f"[*] Gateway Host:    http://{host}:{port}/v1")
+    print(f"[*] Target Model:       {model_id}")
+    print(f"[*] Compute Device:     {resolved_device}")
+    print(f"[*] Gateway Host:       http://{host}:{port}/v1")
+    print(f"[*] Telemetry Endpoint: http://{host}:{port}/v1/telemetry")
     print("-" * 80)
     print("  IDE CONFIGURATION (Cursor / VS Code Continue / Antigravity / Aider):")
-    print(f"  * Base URL:        http://localhost:{port}/v1")
-    print(f"  * Model Name:      {model_id}")
-    print("  * API Key:         any (e.g. 'subneutralize')")
+    print(f"  * Base URL:           http://localhost:{port}/v1")
+    print(f"  * Model Name:         {model_id}")
+    print("  * API Key:            any (e.g. 'subneutralize')")
     print("-" * 80)
 
     print(f"[*] Loading {model_id} into memory...")

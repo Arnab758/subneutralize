@@ -109,3 +109,16 @@ def test_chat_completions_streaming():
     assert "text/event-stream" in res.headers["content-type"]
     assert "data: [DONE]" in res.text
 
+def test_telemetry_endpoint():
+    engine = MockEngine()
+    app = create_app(engine, model_id="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B")
+    client = TestClient(app)
+
+    res = client.get("/v1/telemetry")
+    assert res.status_code == 200
+    data = res.json()
+    assert "engine_version" in data
+    assert "0.2.0" in data["engine_version"]
+    assert data["model"] == "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+    assert "total_requests" in data
+
