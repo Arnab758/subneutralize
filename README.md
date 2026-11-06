@@ -4,6 +4,7 @@
 [![CI](https://github.com/Arnab758/subneutralize/actions/workflows/ci.yml/badge.svg)](https://github.com/Arnab758/subneutralize/actions/workflows/ci.yml)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22941619.svg)](https://doi.org/10.5281/zenodo.22941619)
 [![Paper PDF](https://img.shields.io/badge/Research%20Paper-PDF-red.svg)](paper/SubNeutralize_Paper.pdf)
+[![Research Paper](https://img.shields.io/badge/Research%20Paper-Markdown-blue.svg)](paper/RESEARCH_PAPER.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
 
@@ -157,6 +158,10 @@ SubNeutralize v0.2.0 introduces **Layer $L-2$ Thin-SVD Prompt Subspace Neutraliz
 | **SWE-bench Lite**<br>(5 Real-World Repositories) | **Resolved Issues** | 2 / 5 (40%) | **3 / 5 (60%)** | **+50% Relative Accuracy** |
 | | **Total Consumed Tokens** | 14,194 tokens | 8,610 tokens | **-39.3% Net Compute** |
 | | **Prefill Context Retention** | Full Raw History | Compact Canonical | **-61.2% Context Bloat** |
+| **5-Turn Agent Coding Loop**<br>(Stratified Tiers A, B, C) | **Tier C Wall-Clock Latency** | 571.85s (9.53m) | **462.68s (7.71m)** | **-19.1% Faster (-109.17s)** |
+| | **Tier C Prefill Ratio** | 4.16× (3,192 tok) | **3.42× (2,941 tok)** | **-323 tok / turn bloat** |
+| | **Tier B Self-Correction** | 0 / 12 (Answer Flip) | **7 / 12 (+6 passes)** | **Monotonic Learning** |
+| | **Syntactic Code Integrity** | 100% | **100%** | **0% AST Mutilation (vs 0% Scissors)** |
 
 To reproduce these benchmarks:
 ```bash
