@@ -20,6 +20,11 @@ from .manifold import (
 )
 from .evictor import StatefulMultiTurnEvictor
 from .engine import SubNeutralize, GovernedOutput, govern
+from .vllm_adapter import (
+    VLLMSubNeutralizeLogitsProcessor,
+    VLLMMultiTurnMiddleware,
+    create_vllm_sampling_params,
+)
 
 # Legacy alias for backward compatibility
 ConsensusEntropyGovernor = ScaleFreeDynamicalGovernor
@@ -41,5 +46,8 @@ __all__ = [
     "extract_clean_code",
     "extract_clean_answer",
     "extract_reasoning_and_answer",
+    "VLLMSubNeutralizeLogitsProcessor",
+    "VLLMMultiTurnMiddleware",
+    "create_vllm_sampling_params",
     "__version__",
 ]
