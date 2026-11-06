@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 
 try:
     from fastapi import FastAPI, HTTPException, Request
-    from fastapi.responses import JSONResponse, StreamingResponse
+    from fastapi.responses import JSONResponse, StreamingResponse, HTMLResponse
     from fastapi.middleware.cors import CORSMiddleware
     import uvicorn
     _HAS_FASTAPI = True
@@ -75,6 +75,104 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
         "compacted_turns_count": 0,
         "manifold_interventions": 0,
     }
+
+    @app.get("/", response_class=HTMLResponse)
+    def dashboard():
+        return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SubNeutralize v0.2.0 Gateway</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #090d16; color: #e2e8f0; margin: 0; padding: 24px; }}
+    .card {{ background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }}
+    .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }}
+    .stat-val {{ font-size: 24px; font-weight: bold; color: #38bdf8; margin-top: 4px; }}
+    .stat-lbl {{ font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }}
+    .btn {{ background: #0284c7; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }}
+    .btn:hover {{ background: #0369a1; }}
+    textarea {{ width: 100%; box-sizing: border-box; background: #030712; border: 1px solid #374151; color: #f8fafc; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 14px; resize: vertical; }}
+    pre {{ background: #030712; border: 1px solid #1e293b; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; color: #a5f3fc; white-space: pre-wrap; min-height: 80px; }}
+    .badge {{ display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }}
+  </style>
+</head>
+<body>
+  <div style="max-width: 900px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <div>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #f8fafc;">SubNeutralize Gateway</h1>
+        <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 13px;">In-Flight Latent Manifold Inference Governor • v0.2.0</p>
+      </div>
+      <div>
+        <span class="badge">ONLINE</span>
+        <a href="/docs" style="color: #38bdf8; font-size: 13px; text-decoration: none; margin-left: 12px;">API Docs &rarr;</a>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><div class="stat-lbl">Model</div><div class="stat-val" style="font-size: 15px; word-break: break-all;">{model_id}</div></div>
+      <div class="card"><div class="stat-lbl">Total Requests</div><div class="stat-val" id="stat-req">0</div></div>
+      <div class="card"><div class="stat-lbl">Tokens Evicted</div><div class="stat-val" id="stat-evicted" style="color: #c084fc;">0</div></div>
+      <div class="card"><div class="stat-lbl">Manifold Interventions</div><div class="stat-val" id="stat-int" style="color: #34d399;">0</div></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top: 0; font-size: 16px;">Interactive Inference Playground</h3>
+      <textarea id="prompt-input" rows="3" placeholder="Enter coding or reasoning prompt... (e.g. Write a thread-safe circular buffer in Python)"></textarea>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+        <label style="font-size: 13px; color: #94a3b8;"><input type="checkbox" id="chk-evict" checked> Stateful KV-Cache Scratchpad Eviction</label>
+        <button class="btn" id="btn-submit" onclick="runInference()">Generate with Governor</button>
+      </div>
+      <h4 style="margin: 16px 0 8px 0; font-size: 13px; color: #94a3b8;">Response:</h4>
+      <pre id="output-box">Output will appear here...</pre>
+    </div>
+  </div>
+
+  <script>
+    async function updateTelemetry() {{
+      try {{
+        const res = await fetch('/v1/telemetry');
+        const data = await res.json();
+        document.getElementById('stat-req').textContent = data.total_requests;
+        document.getElementById('stat-evicted').textContent = data.total_prefill_tokens_evicted;
+        document.getElementById('stat-int').textContent = data.manifold_interventions;
+      }} catch(e) {{}}
+    }}
+    setInterval(updateTelemetry, 2500);
+    updateTelemetry();
+
+    async function runInference() {{
+      const prompt = document.getElementById('prompt-input').value.trim();
+      if (!prompt) return;
+      const btn = document.getElementById('btn-submit');
+      const out = document.getElementById('output-box');
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      out.textContent = 'Computing trajectory through latent manifold...';
+
+      try {{
+        const res = await fetch('/v1/chat/completions', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }},
+          body: JSON.stringify({{
+            messages: [{{ role: 'user', content: prompt }}],
+            enable_eviction: document.getElementById('chk-evict').checked
+          }})
+        }});
+        const data = await res.json();
+        out.textContent = data.choices[0].message.content;
+      }} catch(e) {{
+        out.textContent = 'Error: ' + e;
+      }} finally {{
+        btn.disabled = false;
+        btn.textContent = 'Generate with Governor';
+        updateTelemetry();
+      }}
+    }}
+  </script>
+</body>
+</html>"""
 
     @app.get("/health")
     def health():

@@ -122,3 +122,15 @@ def test_telemetry_endpoint():
     assert data["model"] == "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
     assert "total_requests" in data
 
+
+def test_root_dashboard_endpoint():
+    engine = MockEngine()
+    app = create_app(engine, model_id="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B")
+    client = TestClient(app)
+
+    res = client.get("/")
+    assert res.status_code == 200
+    assert "SubNeutralize Gateway" in res.text
+    assert "text/html" in res.headers["content-type"]
+
+
