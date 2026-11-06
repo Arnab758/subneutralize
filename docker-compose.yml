@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  subneutralize:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: arnabdutta/subneutralize:v0.2.0
+    container_name: subneutralize-gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - SUBNEUTRALIZE_MODEL=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+      - PORT=8000
+      - HOST=0.0.0.0
+    volumes:
+      - ~/.cache/huggingface:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
