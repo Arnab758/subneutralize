@@ -166,6 +166,7 @@ def main():
     parser.add_argument("--host", type=str, default="127.0.0.1", help="Gateway host for serve mode (default: 127.0.0.1)")
     parser.add_argument("--port", type=int, default=8000, help="Gateway port for serve mode (default: 8000)")
     parser.add_argument("--serve", action="store_true", help="Launch OpenAI-compatible local proxy for Cursor / IDEs")
+    parser.add_argument("--top", "--monitor", action="store_true", help="Launch real-time terminal telemetry monitor")
     parser.add_argument("--compare", action="store_true", help="Run head-to-head comparison vs. unconstrained Vanilla baseline")
     parser.add_argument("--benchmark", action="store_true", help="Run verification benchmark suite")
     parser.add_argument("--interactive", "-i", action="store_true", help="Launch interactive REPL session")
@@ -175,6 +176,11 @@ def main():
     if args.benchmark:
         from .benchmark import main as run_benchmark
         run_benchmark()
+        return
+
+    if args.top or (args.command_or_prompt and args.command_or_prompt.lower() in ("top", "monitor")):
+        from .monitor import run_terminal_monitor
+        run_terminal_monitor(host=args.host, port=args.port)
         return
 
     if args.serve or (args.command_or_prompt and args.command_or_prompt.lower() == "serve"):
