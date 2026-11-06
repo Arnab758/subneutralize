@@ -1,6 +1,7 @@
 # SubNeutralize: Latent Dynamical Inference Governor for Reasoning Models
 
 [![PyPI version](https://badge.fury.io/py/subneutralize.svg)](https://pypi.org/project/subneutralize/)
+[![CI](https://github.com/Arnab758/subneutralize/actions/workflows/ci.yml/badge.svg)](https://github.com/Arnab758/subneutralize/actions/workflows/ci.yml)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22941619.svg)](https://doi.org/10.5281/zenodo.22941619)
 [![Paper PDF](https://img.shields.io/badge/Research%20Paper-PDF-red.svg)](paper/SubNeutralize_Paper.pdf)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
