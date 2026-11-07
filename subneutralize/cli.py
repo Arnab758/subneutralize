@@ -162,6 +162,51 @@ def run_interactive_repl(model_id: str, device: str):
             print(f"Error: {e}\n")
 
 
+def run_aider_proxy(host: str = "127.0.0.1", port: int = 8000, extra_args: Optional[list] = None) -> bool:
+    """Launches Aider seamlessly routed through SubNeutralize inference governor."""
+    import shutil
+    import subprocess
+    import urllib.request
+    import json
+
+    gateway_url = f"http://{host}:{port}/v1"
+    model_name = "subneutralize-governed-model"
+
+    try:
+        req = urllib.request.Request(f"http://{host}:{port}/health", headers={"User-Agent": "SubNeutralize-Aider/0.2.1"})
+        with urllib.request.urlopen(req, timeout=2.0) as res:
+            data = json.loads(res.read().decode("utf-8"))
+            model_name = data.get("model", model_name)
+        print(f"[OK] Connected to live SubNeutralize Gateway at http://{host}:{port} (Model: {model_name})")
+    except Exception:
+        print(f"[WARN] SubNeutralize Gateway not detected at http://{host}:{port}.")
+        print(f"       Tip: In another terminal, run: subneutralize serve --port {port}")
+
+    aider_bin = shutil.which("aider")
+    if not aider_bin:
+        print("\n[ERROR] 'aider' executable not found on system PATH.")
+        print("Install Aider with: pip install aider-chat")
+        print("Then launch: subneutralize aider\n")
+        return False
+
+    cmd = [
+        aider_bin,
+        "--openai-api-base", gateway_url,
+        "--openai-api-key", "subneutralize",
+        "--model", f"openai/{model_name}",
+    ]
+    if extra_args:
+        cmd.extend(extra_args)
+
+    cmd_str = " ".join(cmd)
+    print(f"[LAUNCH] Executing Aider with SubNeutralize routing: {cmd_str}\n")
+    try:
+        subprocess.run(cmd)
+        return True
+    except KeyboardInterrupt:
+        return True
+
+
 def main():
     default_dev = "cuda" if (_HAS_TORCH and torch.cuda.is_available()) else "cpu"
     parser = argparse.ArgumentParser(
@@ -196,6 +241,10 @@ def main():
     if args.serve or (args.command_or_prompt and args.command_or_prompt.lower() == "serve"):
         from .server import start_server
         start_server(model_id=args.model, host=args.host, port=args.port, device=args.device)
+        return
+
+    if args.command_or_prompt and args.command_or_prompt.lower() == "aider":
+        run_aider_proxy(host=args.host, port=args.port, extra_args=sys.argv[2:])
         return
 
     if not _HAS_TORCH:
