@@ -354,7 +354,10 @@ def start_server(model_id: str, host: str = "0.0.0.0", port: int = 8000, device:
     print(f"[*] Loading {model_id} into memory...")
     dtype = torch.bfloat16 if resolved_device == "cuda" else torch.float32
     tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(model_id, device_map=resolved_device, torch_dtype=dtype)
+    model_kwargs = {"torch_dtype": dtype}
+    if resolved_device == "cuda":
+        model_kwargs["device_map"] = "auto"
+    model = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs).to(resolved_device)
     governor = SubNeutralize(model, tokenizer)
 
     app = create_app(governor, model_id)

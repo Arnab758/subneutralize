@@ -33,7 +33,10 @@ def run_prompt_comparison(model_id: str, prompt: str, device: str, max_tokens: i
     print(f"[*] Loading model: {model_id} on {device}...")
     dtype = torch.bfloat16 if device == "cuda" else torch.float32
     tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(model_id, device_map=device, torch_dtype=dtype)
+    model_kwargs = {"torch_dtype": dtype}
+    if device == "cuda":
+        model_kwargs["device_map"] = "auto"
+    model = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs).to(device)
     governor = SubNeutralize(model, tokenizer)
 
     # Use formatted chat prompt for both runs
@@ -93,7 +96,10 @@ def run_governed_prompt(model_id: str, prompt: str, device: str, max_tokens: int
     print(f"[*] Loading model: {model_id} on {device}...")
     dtype = torch.bfloat16 if device == "cuda" else torch.float32
     tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(model_id, device_map=device, torch_dtype=dtype)
+    model_kwargs = {"torch_dtype": dtype}
+    if device == "cuda":
+        model_kwargs["device_map"] = "auto"
+    model = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs).to(device)
     governor = SubNeutralize(model, tokenizer)
 
     print(f"\n[PROMPT]: {prompt}\n")
@@ -125,7 +131,10 @@ def run_interactive_repl(model_id: str, device: str):
     print(f"[*] Initializing SubNeutralize REPL with {model_id} on {device}...")
     dtype = torch.bfloat16 if device == "cuda" else torch.float32
     tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(model_id, device_map=device, torch_dtype=dtype)
+    model_kwargs = {"torch_dtype": dtype}
+    if device == "cuda":
+        model_kwargs["device_map"] = "auto"
+    model = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs).to(device)
     governor = SubNeutralize(model, tokenizer)
 
     print("\nReady! Enter your prompt below (or type 'exit' or 'quit' to stop).\n")
