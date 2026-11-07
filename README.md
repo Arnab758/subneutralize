@@ -39,12 +39,16 @@ docker compose up -d
 
 # Open a side terminal for real-time telemetry:
 subneutralize top
+
+# Or launch Aider with automatic 1-click SubNeutralize routing:
+subneutralize aider
 ```
 
 #### IDE Configuration:
 * **Cursor:** Set OpenAI API Base URL to `http://localhost:8000/v1` (API key: `subneutralize`).
 * **VS Code (Continue / Cline):** Add model endpoint pointing to `http://localhost:8000/v1`.
-* **Aider:** `aider --openai-api-base http://localhost:8000/v1 --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B`
+* **Aider (1-Click Drop-in):** `subneutralize aider` (automatically detects the running gateway, routes traffic to `http://localhost:8000/v1`, and attaches optimal model flags).
+* **Interactive Web Dashboard:** Open `http://localhost:8000/` in any browser to inspect real-time intervention counters and test prompts.
 
 ---
 
@@ -106,6 +110,9 @@ subneutralize -i
 
 # Real-time terminal telemetry monitor (live KV savings & Lyapunov potential)
 subneutralize top
+
+# Or launch Aider with automatic 1-click SubNeutralize routing:
+subneutralize aider
 ```
 
 ---
