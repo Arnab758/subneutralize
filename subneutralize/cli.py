@@ -159,7 +159,7 @@ def main():
         prog="subneutralize",
         description="SubNeutralize: Latent Dynamical Inference Governor for Reasoning Models"
     )
-    parser.add_argument("--version", "-v", action="version", version="subneutralize 0.2.0")
+    parser.add_argument("--version", "-v", action="version", version="subneutralize 0.2.1")
     parser.add_argument("command_or_prompt", nargs="?", default=None, help="'serve' to launch OpenAI gateway for Cursor/VS Code, or prompt to govern")
     parser.add_argument("--model", type=str, default="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B", help="Model ID (default: deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B)")
     parser.add_argument("--device", type=str, default=default_dev, help=f"Execution device (default: {default_dev})")
@@ -175,6 +175,7 @@ def main():
 
     if args.benchmark:
         from .benchmark import main as run_benchmark
+        sys.argv = [sys.argv[0]]
         run_benchmark()
         return
 
