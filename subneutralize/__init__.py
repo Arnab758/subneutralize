@@ -29,7 +29,7 @@ from .vllm_adapter import (
 # Legacy alias for backward compatibility
 ConsensusEntropyGovernor = ScaleFreeDynamicalGovernor
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __author__ = "Arnab Dutta"
 
 __all__ = [

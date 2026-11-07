@@ -118,7 +118,7 @@ def test_telemetry_endpoint():
     assert res.status_code == 200
     data = res.json()
     assert "engine_version" in data
-    assert "0.2.0" in data["engine_version"]
+    assert "0.2.1" in data["engine_version"]
     assert data["model"] == "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
     assert "total_requests" in data
 

@@ -52,7 +52,7 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
     app = FastAPI(
         title="SubNeutralize Inference Gateway",
         description="OpenAI-compatible inference server with runtime overthinking interception & KV eviction.",
-        version="0.2.0"
+        version="0.2.1"
     )
 
     app.add_middleware(
@@ -82,7 +82,7 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>SubNeutralize v0.2.0 Gateway</title>
+  <title>SubNeutralize v0.2.1 Gateway</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #090d16; color: #e2e8f0; margin: 0; padding: 24px; }}
@@ -102,7 +102,7 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
       <div>
         <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #f8fafc;">SubNeutralize Gateway</h1>
-        <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 13px;">In-Flight Latent Manifold Inference Governor • v0.2.0</p>
+        <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 13px;">In-Flight Latent Manifold Inference Governor • v0.2.1</p>
       </div>
       <div>
         <span class="badge">ONLINE</span>
@@ -179,8 +179,8 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
         return {
             "status": "healthy",
             "model": model_id,
-            "version": "0.2.0",
-            "governor": "SubNeutralize Manifold Consensus Governor (v0.2.0)"
+            "version": "0.2.1",
+            "governor": "SubNeutralize Manifold Consensus Governor (v0.2.1)"
         }
 
     @app.get("/v1/models")
@@ -200,7 +200,7 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
     @app.get("/v1/telemetry")
     def get_telemetry():
         return {
-            "engine_version": "SubNeutralize v0.2.0 (Layer L-2 Manifold Governor + Stateful KV Evictor)",
+            "engine_version": "SubNeutralize v0.2.1 (Layer L-2 Manifold Governor + Stateful KV Evictor)",
             "model": model_id,
             "total_requests": telemetry_state["total_requests"],
             "total_prompt_tokens": telemetry_state["total_prompt_tokens"],
