@@ -211,7 +211,7 @@ def create_app(engine: Any, model_id: str) -> "FastAPI":
         }
 
     @app.post("/v1/chat/completions")
-    async def chat_completions(req: ChatCompletionRequest):
+    def chat_completions(req: ChatCompletionRequest):
         telemetry_state["total_requests"] += 1
 
         # 1. Prepare structured messages
