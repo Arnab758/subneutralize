@@ -16,6 +16,7 @@ from .governor import (
     extract_clean_answer,
     extract_reasoning_and_answer,
 )
+from .evictor import StatefulMultiTurnEvictor
 
 
 @dataclass
@@ -33,6 +34,128 @@ class GovernedOutput:
     consensus_reached: bool
     consensus_step: Optional[int] = None
     history: Optional[List[Dict[str, Any]]] = None
+    vram_saved_pct: float = 0.0
+
+
+class PhysicalCacheSlicer:
+    """
+    Polymorphic Physical KV Cache Tensor Slicer.
+    Directly slices HuggingFace DynamicCache (transformers v4 and v5) and tuple-of-tuples
+    past_key_values in-place during generation when sequence length exceeds retained budget,
+    slashing >= 55% physical tensor VRAM while strictly preserving attention sinks and
+    tail observation window.
+    """
+
+    @staticmethod
+    def get_seq_length(past_key_values: Any) -> int:
+        """Retrieves active sequence length across all cache implementations."""
+        if past_key_values is None:
+            return 0
+        if hasattr(past_key_values, "get_seq_length"):
+            try:
+                return past_key_values.get_seq_length()
+            except Exception:
+                pass
+        if hasattr(past_key_values, "key_cache") and len(past_key_values.key_cache) > 0:
+            return past_key_values.key_cache[0].shape[2]
+        if hasattr(past_key_values, "layers") and len(past_key_values.layers) > 0:
+            first_layer = past_key_values.layers[0]
+            if hasattr(first_layer, "keys") and first_layer.keys is not None:
+                return first_layer.keys.shape[2]
+        if isinstance(past_key_values, (tuple, list)) and len(past_key_values) > 0:
+            return past_key_values[0][0].shape[2]
+        return 0
+
+    @staticmethod
+    def compute_cache_bytes(past_key_values: Any) -> int:
+        """Computes total physical bytes consumed by tensors in cache."""
+        if past_key_values is None:
+            return 0
+        total = 0
+        try:
+            if hasattr(past_key_values, "key_cache"):
+                for k, v in zip(past_key_values.key_cache, past_key_values.value_cache):
+                    total += k.element_size() * k.nelement() + v.element_size() * v.nelement()
+            elif hasattr(past_key_values, "layers"):
+                for layer in past_key_values.layers:
+                    if hasattr(layer, "keys") and layer.keys is not None:
+                        total += layer.keys.element_size() * layer.keys.nelement()
+                    if hasattr(layer, "values") and layer.values is not None:
+                        total += layer.values.element_size() * layer.values.nelement()
+            elif isinstance(past_key_values, (tuple, list)):
+                for k, v in past_key_values:
+                    total += k.element_size() * k.nelement() + v.element_size() * v.nelement()
+        except Exception:
+            pass
+        return total
+
+    @classmethod
+    def slice_cache(
+        cls,
+        past_key_values: Any,
+        retained_budget: int = 384,
+        observation_window: int = 16,
+    ) -> Tuple[Any, float]:
+        """
+        Slices physical KV cache tensors in-place, returning (sliced_pkv, vram_saved_pct).
+        Guarantees vram_saved_pct >= 55% when seq_len >= 1024 and retained_budget <= 384.
+        """
+        seq_len = cls.get_seq_length(past_key_values)
+        if seq_len <= retained_budget:
+            return past_key_values, 0.0
+
+        initial_bytes = cls.compute_cache_bytes(past_key_values)
+        alpha = min(observation_window, seq_len)
+        candidate_len = seq_len - alpha
+        budget_for_candidates = max(0, retained_budget - alpha)
+
+        # Determine tensor device
+        device = torch.device("cpu")
+        if hasattr(past_key_values, "layers") and len(past_key_values.layers) > 0:
+            if hasattr(past_key_values.layers[0], "keys") and past_key_values.layers[0].keys is not None:
+                device = past_key_values.layers[0].keys.device
+        elif hasattr(past_key_values, "key_cache") and len(past_key_values.key_cache) > 0:
+            device = past_key_values.key_cache[0].device
+        elif isinstance(past_key_values, (tuple, list)) and len(past_key_values) > 0:
+            device = past_key_values[0][0].device
+
+        # Kept indices: initial sinks + protected tail observation window
+        kept_indices = torch.cat([
+            torch.arange(budget_for_candidates, device=device),
+            torch.arange(candidate_len, seq_len, device=device)
+        ])
+
+        # Case 1: Transformers 5.x DynamicLayer architecture
+        if hasattr(past_key_values, "layers"):
+            for layer in past_key_values.layers:
+                if hasattr(layer, "keys") and layer.keys is not None:
+                    layer.keys = layer.keys[:, :, kept_indices, :].contiguous()
+                if hasattr(layer, "values") and layer.values is not None:
+                    layer.values = layer.values[:, :, kept_indices, :].contiguous()
+
+        # Case 2: Transformers 4.x DynamicCache key_cache / value_cache lists
+        elif hasattr(past_key_values, "key_cache"):
+            for i in range(len(past_key_values.key_cache)):
+                past_key_values.key_cache[i] = past_key_values.key_cache[i][:, :, kept_indices, :].contiguous()
+                past_key_values.value_cache[i] = past_key_values.value_cache[i][:, :, kept_indices, :].contiguous()
+            if hasattr(past_key_values, "_seen_tokens"):
+                past_key_values._seen_tokens = len(kept_indices)
+
+        # Case 3: Legacy tuple of tuples ((k, v), ...)
+        elif isinstance(past_key_values, (tuple, list)):
+            past_key_values = tuple(
+                (k[:, :, kept_indices, :].contiguous(), v[:, :, kept_indices, :].contiguous())
+                for k, v in past_key_values
+            )
+
+        final_bytes = cls.compute_cache_bytes(past_key_values)
+        if initial_bytes > 0:
+            vram_saved_pct = round(((initial_bytes - final_bytes) / initial_bytes) * 100.0, 1)
+        else:
+            vram_saved_pct = round(((seq_len - len(kept_indices)) / max(1, seq_len)) * 100.0, 1)
+
+        return past_key_values, vram_saved_pct
+
 
 
 def sample_next_token(logits: torch.Tensor, temperature: float = 0.6, top_p: float = 0.95) -> torch.Tensor:
@@ -79,6 +202,9 @@ class SubNeutralize:
         velocity_ceiling: float = 0.12,
         dispersion_ceiling: float = 0.08,
         debounce_tokens: int = 3,
+        enable_cache_slicing: bool = True,
+        retained_cache_budget: int = 384,
+        cache_observation_window: int = 16,
     ):
         self.model = model
         self.tokenizer = tokenizer
@@ -99,6 +225,13 @@ class SubNeutralize:
             dispersion_ceiling=dispersion_ceiling,
             debounce_tokens=debounce_tokens,
         )
+
+        # 3. Initialize Evictor and Physical Cache Slicer
+        self.evictor = StatefulMultiTurnEvictor(tokenizer=self.tokenizer)
+        self.enable_cache_slicing = enable_cache_slicing
+        self.retained_cache_budget = retained_cache_budget
+        self.cache_observation_window = cache_observation_window
+        self.cache_slicer = PhysicalCacheSlicer()
         
         # Internal hook tracking
         self._current_hidden: Optional[torch.Tensor] = None
@@ -231,6 +364,10 @@ class SubNeutralize:
         self.attach()
 
         start_time = time.time()
+        # Multi-turn compaction if prompt is a dialogue message list
+        if isinstance(prompt, list):
+            prompt, _, _ = self.evictor.compact_messages(prompt, evict_history_scratchpads=True)
+
         formatted_prompt = self._format_prompt(prompt)
         inputs = self.tokenizer(formatted_prompt, return_tensors="pt").to(self.device)
         input_ids = inputs["input_ids"]
@@ -244,6 +381,7 @@ class SubNeutralize:
         think_tokens = 0
         answer_tokens = 0
         in_thinking_phase = True
+        vram_saved_pct = 0.0
 
         try:
             for step in range(max_new_tokens):
@@ -282,6 +420,14 @@ class SubNeutralize:
                             consensus_reached = True
                             in_thinking_phase = False
                             self.detach()
+
+                            # Physical DynamicCache Slicing: Slice historical thinking keys/values in-place
+                            if self.enable_cache_slicing and past_key_values is not None:
+                                past_key_values, vram_saved_pct = self.cache_slicer.slice_cache(
+                                    past_key_values,
+                                    retained_budget=self.retained_cache_budget,
+                                    observation_window=self.cache_observation_window,
+                                )
 
                             # In-flight transition: Inject closing tag and optional prefix
                             trans_text = "\n</think>\n"
@@ -326,7 +472,9 @@ class SubNeutralize:
             consensus_reached=consensus_reached,
             consensus_step=self.governor.consensus_token,
             history=self.governor.history,
+            vram_saved_pct=vram_saved_pct,
         )
+
 
 
 def govern(model: torch.nn.Module, tokenizer: Any, **kwargs) -> SubNeutralize:

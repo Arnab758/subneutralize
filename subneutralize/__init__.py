@@ -18,8 +18,8 @@ from .manifold import (
     SubNeutralizeManifoldProcessor,
     OnlineManifoldStat,
 )
-from .evictor import StatefulMultiTurnEvictor
-from .engine import SubNeutralize, GovernedOutput, govern
+from .evictor import StatefulMultiTurnEvictor, RegionType
+from .engine import SubNeutralize, GovernedOutput, govern, PhysicalCacheSlicer
 from .vllm_adapter import (
     VLLMSubNeutralizeLogitsProcessor,
     VLLMMultiTurnMiddleware,
@@ -29,7 +29,7 @@ from .vllm_adapter import (
 # Legacy alias for backward compatibility
 ConsensusEntropyGovernor = ScaleFreeDynamicalGovernor
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 __author__ = "Arnab Dutta"
 
 __all__ = [
@@ -41,6 +41,8 @@ __all__ = [
     "SubNeutralizeManifoldProcessor",
     "OnlineManifoldStat",
     "StatefulMultiTurnEvictor",
+    "RegionType",
+    "PhysicalCacheSlicer",
     "ConsensusEntropyGovernor",
     "govern",
     "extract_clean_code",

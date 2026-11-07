@@ -58,9 +58,17 @@ class PromptSubspaceGovernor:
     Projects out prompt-induced directional bias to isolate pure algorithmic reasoning velocity.
     """
 
-    def __init__(self, rank_k: int = 4):
+    def __init__(
+        self,
+        rank_k: int = 4,
+        steer_gain: float = 0.15,
+        enable_steering: bool = True,
+    ):
         self.rank_k = rank_k
+        self.steer_gain = steer_gain
+        self.enable_steering = enable_steering
         self.V_bias: Optional[torch.Tensor] = None
+        self.v_steer: Optional[torch.Tensor] = None
 
     def fit_prompt(self, H_prompt: torch.Tensor) -> Tuple[int, int]:
         """
@@ -95,6 +103,72 @@ class PromptSubspaceGovernor:
             return h_t
         return h_t - (h_t @ self.V_bias) @ self.V_bias.T
 
+    def set_steering_vector(self, v: torch.Tensor) -> None:
+        """
+        Sets an explicit contrastive steering vector.
+        Orthogonalizes against V_bias via P_perp and normalizes to unit norm.
+        """
+        vec = v.flatten().float()
+        if self.V_bias is not None:
+            v_bias_dev = self.V_bias.to(device=vec.device, dtype=vec.dtype)
+            vec = vec - (vec @ v_bias_dev) @ v_bias_dev.T
+        norm = torch.norm(vec, p=2)
+        if norm > 1e-8:
+            self.v_steer = (vec / norm).contiguous()
+        else:
+            self.v_steer = None
+
+    def derive_manifold_steering_vector(self, sliding_window_activations: torch.Tensor) -> Optional[torch.Tensor]:
+        """
+        Derives the overthinking steering direction v_steer in-flight from sliding window
+        activations M in R^{W x d} using Thin-SVD on centered activations.
+        Orthogonalizes against V_bias and normalizes to unit norm.
+        """
+        try:
+            M = sliding_window_activations.float()
+            if M.dim() == 3:
+                M = M.squeeze(0)
+            M_c = M - M.mean(dim=0, keepdim=True)
+            _, _, Vh = torch.linalg.svd(M_c, full_matrices=False)
+            u1 = Vh[0, :].contiguous()  # First principal component direction
+
+            # Orthogonalize against prompt bias subspace
+            if self.V_bias is not None:
+                v_bias_dev = self.V_bias.to(device=u1.device, dtype=u1.dtype)
+                u1 = u1 - (u1 @ v_bias_dev) @ v_bias_dev.T
+
+            norm = torch.norm(u1, p=2)
+            if norm > 1e-8:
+                self.v_steer = (u1 / norm).contiguous()
+                return self.v_steer
+        except Exception:
+            pass
+        return None
+
+    def steer(self, h: torch.Tensor, gain: Optional[float] = None) -> torch.Tensor:
+        """
+        Applies dual-manifold projection:
+        1. Projects out prompt bias: h_perp = P_perp(h)
+        2. Damps overthinking component along v_steer:
+           h_steered = h_perp - gamma * <h_perp, v_steer> * v_steer
+        """
+        h_perp = self.project(h)
+        if not self.enable_steering or self.v_steer is None:
+            return h_perp
+
+        g = gain if gain is not None else self.steer_gain
+        if g <= 0.0:
+            return h_perp
+
+        v = self.v_steer.to(device=h_perp.device, dtype=h_perp.dtype)
+        if h_perp.dim() == 1:
+            proj = torch.dot(h_perp, v)
+            return h_perp - g * proj * v
+        else:
+            proj = torch.matmul(h_perp, v.view(-1, 1))
+            return h_perp - g * proj * v.view(*([1] * (h_perp.dim() - 1)), -1)
+
+
 
 # ==============================================================================
 # 3. UNIFIED GEOMETRIC LOGITS PROCESSOR (HF & vLLM COMPATIBLE)
@@ -114,6 +188,10 @@ class SubNeutralizeManifoldProcessor(LogitsProcessor):
         structural_boundary_ids: Optional[Set[int]] = None,
         window_size: int = 16,
         svd_rank: int = 4,
+        steer_gain: float = 0.15,
+        enable_steering: bool = True,
+        orbit_steer_threshold: float = 0.80,
+        emergency_attractor_steps: int = 12,
     ):
         super().__init__()
         self.model = model
@@ -122,6 +200,10 @@ class SubNeutralizeManifoldProcessor(LogitsProcessor):
         self.eos_token_id = eos_token_id
         self.window_size = window_size
         self.svd_rank = svd_rank
+        self.steer_gain = steer_gain
+        self.enable_steering = enable_steering
+        self.orbit_steer_threshold = orbit_steer_threshold
+        self.emergency_attractor_steps = emergency_attractor_steps
 
         if structural_boundary_ids is None:
             self.structural_boundary_ids = set()
@@ -132,7 +214,11 @@ class SubNeutralizeManifoldProcessor(LogitsProcessor):
         else:
             self.structural_boundary_ids = structural_boundary_ids
 
-        self.prompt_governor = PromptSubspaceGovernor(rank_k=svd_rank)
+        self.prompt_governor = PromptSubspaceGovernor(
+            rank_k=svd_rank,
+            steer_gain=steer_gain,
+            enable_steering=enable_steering,
+        )
         self.prompt_len: Optional[int] = None
         self.latest_h: Optional[torch.Tensor] = None
         self.prev_h: Optional[torch.Tensor] = None
@@ -148,6 +234,18 @@ class SubNeutralizeManifoldProcessor(LogitsProcessor):
         self.stat_vel = OnlineManifoldStat()
         self.stat_ent = OnlineManifoldStat()
         self.stat_conf = OnlineManifoldStat()
+
+        # Delimiter Depth Tracking (D_t = 0 for balanced brackets)
+        self.d_paren: int = 0
+        self.d_bracket: int = 0
+        self.d_brace: int = 0
+        self.delimiter_depth: int = 0
+        self._token_delimiter_cache: Dict[int, str] = {}
+
+        # Steering State
+        self.hesitation_damping_active: bool = False
+        self.damping_step_count: int = 0
+        self.max_damping_steps: int = 6
 
         self.ema_phi: float = 0.0
         self.attractor_steps: int = 0
@@ -167,6 +265,34 @@ class SubNeutralizeManifoldProcessor(LogitsProcessor):
         else:
             self.hook_handle = None
 
+    def _update_delimiter_depth(self, token_id: int) -> int:
+        """Updates delimiter depth counters based on decoded token text."""
+        if token_id in self._token_delimiter_cache:
+            text = self._token_delimiter_cache[token_id]
+        else:
+            try:
+                text = self.tokenizer.decode([token_id], skip_special_tokens=False)
+            except Exception:
+                text = ""
+            self._token_delimiter_cache[token_id] = text
+
+        for ch in text:
+            if ch == '(':
+                self.d_paren += 1
+            elif ch == ')':
+                self.d_paren = max(0, self.d_paren - 1)
+            elif ch == '[':
+                self.d_bracket += 1
+            elif ch == ']':
+                self.d_bracket = max(0, self.d_bracket - 1)
+            elif ch == '{':
+                self.d_brace += 1
+            elif ch == '}':
+                self.d_brace = max(0, self.d_brace - 1)
+
+        self.delimiter_depth = self.d_paren + self.d_bracket + self.d_brace
+        return self.delimiter_depth
+
     def _layer_hook(self, module, inp, outp):
         hidden = outp[0] if isinstance(outp, tuple) else outp
         if hidden.shape[1] > 1:
@@ -177,9 +303,27 @@ class SubNeutralizeManifoldProcessor(LogitsProcessor):
             self.spectral_cover_bound = cover_bound
             self.latest_h = H[-1:].contiguous()
         else:
-            # Autoregressive decoding phase: project out prompt bias
-            h_t = hidden[0, -1:, :].detach().float()
-            self.latest_h = self.prompt_governor.project(h_t)
+            # Autoregressive decoding phase: apply prompt projection & manifold steering
+            with torch.no_grad():
+                h_t = hidden[0, -1:, :].detach().float()
+                should_steer = (
+                    self.enable_steering
+                    and (self.hesitation_damping_active or self.attractor_steps > 0)
+                    and self.prompt_governor.v_steer is not None
+                )
+                if should_steer:
+                    h_steered = self.prompt_governor.steer(h_t, gain=self.steer_gain)
+                    self.latest_h = h_steered
+                    steered_val = h_steered.to(dtype=hidden.dtype, device=hidden.device)
+                    hidden[:, -1:, :] = steered_val
+                    self.damping_step_count += 1
+                    if self.damping_step_count >= self.max_damping_steps:
+                        self.hesitation_damping_active = False
+                        self.damping_step_count = 0
+                else:
+                    self.latest_h = self.prompt_governor.project(h_t)
+
+        return outp
 
     def remove_hook(self):
         if self.hook_handle is not None:
@@ -196,6 +340,7 @@ class SubNeutralizeManifoldProcessor(LogitsProcessor):
             return scores
 
         last_tok = int(gen_tokens[-1].item())
+        self._update_delimiter_depth(last_tok)
 
         if not self.think_closed and (gen_tokens == self.think_end_token_id).any():
             self.think_closed = True
@@ -248,6 +393,17 @@ class SubNeutralizeManifoldProcessor(LogitsProcessor):
             q = s / (torch.sum(s) + 1e-12)
             erank_t = float(torch.exp(-torch.sum(q * torch.log(q + 1e-12))).item())
 
+            # Active Steering Trigger: detect approaching hesitation loop or stagnation
+            hesitation_detected = (
+                orbit_recurrence >= self.orbit_steer_threshold
+                or (v_t < 0.005 and erank_t < 3.0)
+            )
+            if self.enable_steering and hesitation_detected and not self.hesitation_damping_active:
+                self.prompt_governor.derive_manifold_steering_vector(M)
+                if self.prompt_governor.v_steer is not None:
+                    self.hesitation_damping_active = True
+                    self.damping_step_count = 0
+
         logits_f = scores[0].float()
         probs = F.softmax(logits_f, dim=-1)
         log_probs = F.log_softmax(logits_f, dim=-1)
@@ -295,8 +451,13 @@ class SubNeutralizeManifoldProcessor(LogitsProcessor):
                 if self.attractor_steps >= 4 or cover_reached:
                     self.convergence_ready = True
 
+        # Syntactic Delimiter & AST Gated Early Exit
         if self.convergence_ready and step > 0:
-            if last_tok in self.structural_boundary_ids or self.attractor_steps >= 8:
+            balanced = (self.delimiter_depth == 0)
+            at_boundary = (last_tok in self.structural_boundary_ids)
+            emergency_exit = (self.attractor_steps >= self.emergency_attractor_steps)
+
+            if (at_boundary and balanced) or emergency_exit:
                 scores[:, self.think_end_token_id] = scores.max() + 100.0
                 self.think_closed = True
                 self.think_close_step = step + 1
@@ -311,6 +472,10 @@ class SubNeutralizeManifoldProcessor(LogitsProcessor):
                     "ent": round(h_ent, 4),
                     "deer_C": round(deer_conf, 4),
                     "phi": round(self.ema_phi, 2),
+                    "delimiter_depth": self.delimiter_depth,
+                    "steer_active": self.hesitation_damping_active,
+                    "emergency_exit": emergency_exit,
                 }
 
         return scores
+
