@@ -25,7 +25,7 @@ from subneutralize.server import create_app
 
 @pytest.fixture
 def temp_firewall():
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         base = Path(tmpdir)
         db_path = base / "test_enterprise.db"
         ws_dir = base / "sandbox_ws"
@@ -41,6 +41,9 @@ def temp_firewall():
         )
         yield fw
         fw.sql_adapter.conn.close()
+        del fw
+        import gc
+        gc.collect()
 
 
 def test_sql_savepoint_commit_and_mass_delete_rollback(temp_firewall: TransactionalActionFirewall):
@@ -409,7 +412,7 @@ def test_universal_schema_agnostic_adapter_on_custom_ecommerce_tables():
     import sqlite3
     from subneutralize import UniversalSQLSavepointAdapter
 
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         base = Path(tmpdir)
         custom_db = base / "custom_saas.db"
         conn = sqlite3.connect(str(custom_db))
