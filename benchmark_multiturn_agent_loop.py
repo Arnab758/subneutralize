@@ -674,8 +674,13 @@ def execute_pytest_in_sandbox(
         "-v",
         "--tb=short",
         "-o",
+        "pythonpath=.",
+        "-o",
         f"cache_dir={cache_path}",
     ]
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(sandbox_dir) + (os.pathsep + env["PYTHONPATH"] if "PYTHONPATH" in env else "")
 
     try:
         proc = subprocess.run(
@@ -684,6 +689,7 @@ def execute_pytest_in_sandbox(
             capture_output=True,
             text=True,
             timeout=timeout,
+            env=env,
         )
         stdout = proc.stdout
         stderr = proc.stderr

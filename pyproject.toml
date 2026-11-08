@@ -57,7 +57,7 @@ subneutralize = "subneutralize.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["subneutralize*"]
+include = ["subneutralize*", "src*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

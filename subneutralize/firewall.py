@@ -758,12 +758,15 @@ class FilesystemShadowAdapter:
                 else policy.run_pytest_on_python_edits
             )
             if filename.endswith(".py") and should_run_pytest:
+                env = os.environ.copy()
+                env["PYTHONPATH"] = str(self.workspace_dir) + (os.pathsep + env["PYTHONPATH"] if "PYTHONPATH" in env else "")
                 proc = subprocess.run(
-                    [sys.executable, "-m", "pytest", "-q"],
+                    [sys.executable, "-m", "pytest", "-q", "-o", "pythonpath=."],
                     cwd=str(self.workspace_dir),
                     capture_output=True,
                     text=True,
                     timeout=15,
+                    env=env,
                 )
                 pytest_out = (proc.stdout + "\n" + proc.stderr).strip()
                 if proc.returncode != 0:
@@ -822,6 +825,8 @@ class FilesystemShadowAdapter:
 
         ws_snapshot = self.take_workspace_snapshot()
         try:
+            env = os.environ.copy()
+            env["PYTHONPATH"] = str(self.workspace_dir) + (os.pathsep + env["PYTHONPATH"] if "PYTHONPATH" in env else "")
             proc = subprocess.run(
                 command,
                 shell=True,
@@ -829,6 +834,7 @@ class FilesystemShadowAdapter:
                 capture_output=True,
                 text=True,
                 timeout=10,
+                env=env,
             )
             combined_out = (proc.stdout + ("\n" + proc.stderr if proc.stderr else "")).strip()
             if proc.returncode != 0:
