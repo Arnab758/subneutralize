@@ -56,13 +56,9 @@ import torch
 from transformers import LogitsProcessorList
 
 # Setup workspace paths
-SCRATCH_DIR = Path(r"C:\Users\ARNAB DUTTA\.gemini\antigravity\scratch\subneutralize")
-OFFICIAL_REPO = Path(r"C:\Users\ARNAB DUTTA\.antigravity-ide\subneutralize")
-
-if str(OFFICIAL_REPO) not in sys.path:
-    sys.path.insert(0, str(OFFICIAL_REPO))
-if str(SCRATCH_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRATCH_DIR))
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 # Import modules under test
 from benchmark_multiturn_agent_loop import (

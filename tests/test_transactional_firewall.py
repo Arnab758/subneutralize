@@ -11,10 +11,9 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-SCRATCH_DIR = Path(__file__).resolve().parent
-if str(SCRATCH_DIR) in sys.path:
-    sys.path.remove(str(SCRATCH_DIR))
-sys.path.insert(0, str(SCRATCH_DIR))
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from subneutralize.firewall import (
     TransactionalActionFirewall,

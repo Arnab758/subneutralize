@@ -1,0 +1,799 @@
+{
+  "metadata": {
+    "timestamp": "2026-11-07T12:44:44.466234+00:00",
+    "model_id": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+    "device": "cpu",
+    "sampling_parameters": {
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "max_new_tokens": 1024
+    }
+  },
+  "tasks": {
+    "leap": {
+      "tier": "Tier A (Easy)",
+      "arms": {
+        "vanilla": {
+          "arm_id": "vanilla",
+          "arm_name": "Arm 1: Vanilla Unconstrained Baseline",
+          "task_id": "leap",
+          "tier": "Tier A (Easy)",
+          "solved": true,
+          "turns_to_solve": 5,
+          "syntax_intact": true,
+          "total_prompt_tokens": 2325,
+          "total_generated_tokens": 638,
+          "total_thinking_tokens": 334,
+          "total_evicted_tokens": 0,
+          "total_wall_clock_s": 1.13,
+          "prefill_growth_ratio": 4.54,
+          "token_savings_pct": 0.0,
+          "final_pytest": {
+            "passed": 9,
+            "total": 9,
+            "exit_code": 0
+          },
+          "turns": [
+            {
+              "turn_index": 1,
+              "role": "assistant",
+              "prompt_tokens": 307,
+              "gen_tokens": 279,
+              "think_tokens": 175,
+              "evicted_tokens": 0,
+              "ttft_ms": 53.0,
+              "latency_s": 0.081,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 2,
+              "role": "assistant",
+              "prompt_tokens": 623,
+              "gen_tokens": 152,
+              "think_tokens": 59,
+              "evicted_tokens": 0,
+              "ttft_ms": 61.0,
+              "latency_s": 0.084,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 4,
+              "role": "assistant",
+              "prompt_tokens": 1395,
+              "gen_tokens": 207,
+              "think_tokens": 100,
+              "evicted_tokens": 0,
+              "ttft_ms": 77.0,
+              "latency_s": 0.085,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            }
+          ]
+        },
+        "subneutralize_full": {
+          "arm_id": "subneutralize_full",
+          "arm_name": "Arm 2: SubNeutralize v0.2.0 Full",
+          "task_id": "leap",
+          "tier": "Tier A (Easy)",
+          "solved": true,
+          "turns_to_solve": 5,
+          "syntax_intact": true,
+          "total_prompt_tokens": 2260,
+          "total_generated_tokens": 638,
+          "total_thinking_tokens": 209,
+          "total_evicted_tokens": 66,
+          "total_wall_clock_s": 1.04,
+          "prefill_growth_ratio": 4.33,
+          "token_savings_pct": 2.2,
+          "final_pytest": {
+            "passed": 9,
+            "total": 9,
+            "exit_code": 0
+          },
+          "turns": [
+            {
+              "turn_index": 1,
+              "role": "assistant",
+              "prompt_tokens": 307,
+              "gen_tokens": 279,
+              "think_tokens": 75,
+              "evicted_tokens": 0,
+              "ttft_ms": 53.0,
+              "latency_s": 0.082,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 2,
+              "role": "assistant",
+              "prompt_tokens": 623,
+              "gen_tokens": 152,
+              "think_tokens": 59,
+              "evicted_tokens": 0,
+              "ttft_ms": 61.0,
+              "latency_s": 0.082,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 4,
+              "role": "assistant",
+              "prompt_tokens": 1330,
+              "gen_tokens": 207,
+              "think_tokens": 75,
+              "evicted_tokens": 66,
+              "ttft_ms": 77.0,
+              "latency_s": 0.085,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            }
+          ]
+        },
+        "static_truncation": {
+          "arm_id": "static_truncation",
+          "arm_name": "Arm 3: Static Truncation (Scissors Control)",
+          "task_id": "leap",
+          "tier": "Tier A (Easy)",
+          "solved": false,
+          "turns_to_solve": null,
+          "syntax_intact": false,
+          "total_prompt_tokens": 2222,
+          "total_generated_tokens": 363,
+          "total_thinking_tokens": 253,
+          "total_evicted_tokens": 0,
+          "total_wall_clock_s": 1.22,
+          "prefill_growth_ratio": 4.21,
+          "token_savings_pct": 12.8,
+          "final_pytest": {
+            "passed": 0,
+            "total": 0,
+            "exit_code": 2
+          },
+          "turns": [
+            {
+              "turn_index": 1,
+              "role": "assistant",
+              "prompt_tokens": 307,
+              "gen_tokens": 279,
+              "think_tokens": 175,
+              "evicted_tokens": 0,
+              "ttft_ms": 53.0,
+              "latency_s": 0.082,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 2,
+              "role": "assistant",
+              "prompt_tokens": 623,
+              "gen_tokens": 59,
+              "think_tokens": 56,
+              "evicted_tokens": 0,
+              "ttft_ms": 61.0,
+              "latency_s": 0.082,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 4,
+              "role": "assistant",
+              "prompt_tokens": 1292,
+              "gen_tokens": 25,
+              "think_tokens": 22,
+              "evicted_tokens": 0,
+              "ttft_ms": 77.0,
+              "latency_s": 0.083,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            }
+          ]
+        },
+        "governor_only": {
+          "arm_id": "governor_only",
+          "arm_name": "Arm 4: Governor-Only Ablation",
+          "task_id": "leap",
+          "tier": "Tier A (Easy)",
+          "solved": true,
+          "turns_to_solve": 5,
+          "syntax_intact": true,
+          "total_prompt_tokens": 2326,
+          "total_generated_tokens": 638,
+          "total_thinking_tokens": 209,
+          "total_evicted_tokens": 0,
+          "total_wall_clock_s": 1.08,
+          "prefill_growth_ratio": 4.55,
+          "token_savings_pct": 0.0,
+          "final_pytest": {
+            "passed": 9,
+            "total": 9,
+            "exit_code": 0
+          },
+          "turns": [
+            {
+              "turn_index": 1,
+              "role": "assistant",
+              "prompt_tokens": 307,
+              "gen_tokens": 279,
+              "think_tokens": 75,
+              "evicted_tokens": 0,
+              "ttft_ms": 53.0,
+              "latency_s": 0.081,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 2,
+              "role": "assistant",
+              "prompt_tokens": 623,
+              "gen_tokens": 152,
+              "think_tokens": 59,
+              "evicted_tokens": 0,
+              "ttft_ms": 61.0,
+              "latency_s": 0.082,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 4,
+              "role": "assistant",
+              "prompt_tokens": 1396,
+              "gen_tokens": 207,
+              "think_tokens": 75,
+              "evicted_tokens": 0,
+              "ttft_ms": 77.0,
+              "latency_s": 0.084,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            }
+          ]
+        }
+      }
+    },
+    "luhn": {
+      "tier": "Tier B (Medium)",
+      "arms": {
+        "vanilla": {
+          "arm_id": "vanilla",
+          "arm_name": "Arm 1: Vanilla Unconstrained Baseline",
+          "task_id": "luhn",
+          "tier": "Tier B (Medium)",
+          "solved": true,
+          "turns_to_solve": 5,
+          "syntax_intact": true,
+          "total_prompt_tokens": 2823,
+          "total_generated_tokens": 702,
+          "total_thinking_tokens": 226,
+          "total_evicted_tokens": 0,
+          "total_wall_clock_s": 1.06,
+          "prefill_growth_ratio": 4.53,
+          "token_savings_pct": 0.0,
+          "final_pytest": {
+            "passed": 12,
+            "total": 12,
+            "exit_code": 0
+          },
+          "turns": [
+            {
+              "turn_index": 1,
+              "role": "assistant",
+              "prompt_tokens": 401,
+              "gen_tokens": 168,
+              "think_tokens": 94,
+              "evicted_tokens": 0,
+              "ttft_ms": 53.0,
+              "latency_s": 0.081,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 2,
+              "role": "assistant",
+              "prompt_tokens": 606,
+              "gen_tokens": 278,
+              "think_tokens": 59,
+              "evicted_tokens": 0,
+              "ttft_ms": 61.0,
+              "latency_s": 0.082,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 4,
+              "role": "assistant",
+              "prompt_tokens": 1816,
+              "gen_tokens": 256,
+              "think_tokens": 73,
+              "evicted_tokens": 0,
+              "ttft_ms": 77.0,
+              "latency_s": 0.089,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            }
+          ]
+        },
+        "subneutralize_full": {
+          "arm_id": "subneutralize_full",
+          "arm_name": "Arm 2: SubNeutralize v0.2.0 Full",
+          "task_id": "luhn",
+          "tier": "Tier B (Medium)",
+          "solved": true,
+          "turns_to_solve": 5,
+          "syntax_intact": true,
+          "total_prompt_tokens": 2558,
+          "total_generated_tokens": 702,
+          "total_thinking_tokens": 207,
+          "total_evicted_tokens": 266,
+          "total_wall_clock_s": 1.08,
+          "prefill_growth_ratio": 4.12,
+          "token_savings_pct": 7.5,
+          "final_pytest": {
+            "passed": 12,
+            "total": 12,
+            "exit_code": 0
+          },
+          "turns": [
+            {
+              "turn_index": 1,
+              "role": "assistant",
+              "prompt_tokens": 401,
+              "gen_tokens": 168,
+              "think_tokens": 75,
+              "evicted_tokens": 0,
+              "ttft_ms": 53.0,
+              "latency_s": 0.082,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 2,
+              "role": "assistant",
+              "prompt_tokens": 506,
+              "gen_tokens": 278,
+              "think_tokens": 59,
+              "evicted_tokens": 100,
+              "ttft_ms": 61.0,
+              "latency_s": 0.084,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 4,
+              "role": "assistant",
+              "prompt_tokens": 1651,
+              "gen_tokens": 256,
+              "think_tokens": 73,
+              "evicted_tokens": 166,
+              "ttft_ms": 77.0,
+              "latency_s": 0.085,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            }
+          ]
+        },
+        "static_truncation": {
+          "arm_id": "static_truncation",
+          "arm_name": "Arm 3: Static Truncation (Scissors Control)",
+          "task_id": "luhn",
+          "tier": "Tier B (Medium)",
+          "solved": false,
+          "turns_to_solve": null,
+          "syntax_intact": false,
+          "total_prompt_tokens": 2282,
+          "total_generated_tokens": 252,
+          "total_thinking_tokens": 172,
+          "total_evicted_tokens": 0,
+          "total_wall_clock_s": 1.31,
+          "prefill_growth_ratio": 3.18,
+          "token_savings_pct": 28.1,
+          "final_pytest": {
+            "passed": 0,
+            "total": 0,
+            "exit_code": 2
+          },
+          "turns": [
+            {
+              "turn_index": 1,
+              "role": "assistant",
+              "prompt_tokens": 401,
+              "gen_tokens": 168,
+              "think_tokens": 94,
+              "evicted_tokens": 0,
+              "ttft_ms": 53.0,
+              "latency_s": 0.081,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 2,
+              "role": "assistant",
+              "prompt_tokens": 606,
+              "gen_tokens": 59,
+              "think_tokens": 56,
+              "evicted_tokens": 0,
+              "ttft_ms": 61.0,
+              "latency_s": 0.083,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 4,
+              "role": "assistant",
+              "prompt_tokens": 1275,
+              "gen_tokens": 25,
+              "think_tokens": 22,
+              "evicted_tokens": 0,
+              "ttft_ms": 77.0,
+              "latency_s": 0.087,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            }
+          ]
+        },
+        "governor_only": {
+          "arm_id": "governor_only",
+          "arm_name": "Arm 4: Governor-Only Ablation",
+          "task_id": "luhn",
+          "tier": "Tier B (Medium)",
+          "solved": true,
+          "turns_to_solve": 5,
+          "syntax_intact": true,
+          "total_prompt_tokens": 2826,
+          "total_generated_tokens": 702,
+          "total_thinking_tokens": 207,
+          "total_evicted_tokens": 0,
+          "total_wall_clock_s": 1.06,
+          "prefill_growth_ratio": 4.54,
+          "token_savings_pct": 0.0,
+          "final_pytest": {
+            "passed": 12,
+            "total": 12,
+            "exit_code": 0
+          },
+          "turns": [
+            {
+              "turn_index": 1,
+              "role": "assistant",
+              "prompt_tokens": 401,
+              "gen_tokens": 168,
+              "think_tokens": 75,
+              "evicted_tokens": 0,
+              "ttft_ms": 53.0,
+              "latency_s": 0.081,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 2,
+              "role": "assistant",
+              "prompt_tokens": 606,
+              "gen_tokens": 278,
+              "think_tokens": 59,
+              "evicted_tokens": 0,
+              "ttft_ms": 61.0,
+              "latency_s": 0.085,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 4,
+              "role": "assistant",
+              "prompt_tokens": 1819,
+              "gen_tokens": 256,
+              "think_tokens": 73,
+              "evicted_tokens": 0,
+              "ttft_ms": 77.0,
+              "latency_s": 0.085,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            }
+          ]
+        }
+      }
+    },
+    "circular-buffer": {
+      "tier": "Tier C (Hard)",
+      "arms": {
+        "vanilla": {
+          "arm_id": "vanilla",
+          "arm_name": "Arm 1: Vanilla Unconstrained Baseline",
+          "task_id": "circular-buffer",
+          "tier": "Tier C (Hard)",
+          "solved": true,
+          "turns_to_solve": 5,
+          "syntax_intact": true,
+          "total_prompt_tokens": 2798,
+          "total_generated_tokens": 884,
+          "total_thinking_tokens": 345,
+          "total_evicted_tokens": 0,
+          "total_wall_clock_s": 1.03,
+          "prefill_growth_ratio": 3.72,
+          "token_savings_pct": 0.0,
+          "final_pytest": {
+            "passed": 10,
+            "total": 10,
+            "exit_code": 0
+          },
+          "turns": [
+            {
+              "turn_index": 1,
+              "role": "assistant",
+              "prompt_tokens": 437,
+              "gen_tokens": 260,
+              "think_tokens": 160,
+              "evicted_tokens": 0,
+              "ttft_ms": 53.0,
+              "latency_s": 0.083,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 2,
+              "role": "assistant",
+              "prompt_tokens": 734,
+              "gen_tokens": 287,
+              "think_tokens": 76,
+              "evicted_tokens": 0,
+              "ttft_ms": 61.0,
+              "latency_s": 0.082,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 4,
+              "role": "assistant",
+              "prompt_tokens": 1627,
+              "gen_tokens": 337,
+              "think_tokens": 109,
+              "evicted_tokens": 0,
+              "ttft_ms": 77.0,
+              "latency_s": 0.085,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            }
+          ]
+        },
+        "subneutralize_full": {
+          "arm_id": "subneutralize_full",
+          "arm_name": "Arm 2: SubNeutralize v0.2.0 Full",
+          "task_id": "circular-buffer",
+          "tier": "Tier C (Hard)",
+          "solved": true,
+          "turns_to_solve": 5,
+          "syntax_intact": true,
+          "total_prompt_tokens": 2384,
+          "total_generated_tokens": 884,
+          "total_thinking_tokens": 225,
+          "total_evicted_tokens": 415,
+          "total_wall_clock_s": 1.09,
+          "prefill_growth_ratio": 3.16,
+          "token_savings_pct": 11.2,
+          "final_pytest": {
+            "passed": 10,
+            "total": 10,
+            "exit_code": 0
+          },
+          "turns": [
+            {
+              "turn_index": 1,
+              "role": "assistant",
+              "prompt_tokens": 437,
+              "gen_tokens": 260,
+              "think_tokens": 75,
+              "evicted_tokens": 0,
+              "ttft_ms": 53.0,
+              "latency_s": 0.082,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 2,
+              "role": "assistant",
+              "prompt_tokens": 568,
+              "gen_tokens": 287,
+              "think_tokens": 75,
+              "evicted_tokens": 166,
+              "ttft_ms": 61.0,
+              "latency_s": 0.082,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 4,
+              "role": "assistant",
+              "prompt_tokens": 1379,
+              "gen_tokens": 337,
+              "think_tokens": 75,
+              "evicted_tokens": 249,
+              "ttft_ms": 77.0,
+              "latency_s": 0.088,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            }
+          ]
+        },
+        "static_truncation": {
+          "arm_id": "static_truncation",
+          "arm_name": "Arm 3: Static Truncation (Scissors Control)",
+          "task_id": "circular-buffer",
+          "tier": "Tier C (Hard)",
+          "solved": false,
+          "turns_to_solve": null,
+          "syntax_intact": false,
+          "total_prompt_tokens": 2584,
+          "total_generated_tokens": 344,
+          "total_thinking_tokens": 238,
+          "total_evicted_tokens": 0,
+          "total_wall_clock_s": 1.23,
+          "prefill_growth_ratio": 3.23,
+          "token_savings_pct": 20.5,
+          "final_pytest": {
+            "passed": 0,
+            "total": 0,
+            "exit_code": 2
+          },
+          "turns": [
+            {
+              "turn_index": 1,
+              "role": "assistant",
+              "prompt_tokens": 437,
+              "gen_tokens": 260,
+              "think_tokens": 160,
+              "evicted_tokens": 0,
+              "ttft_ms": 53.0,
+              "latency_s": 0.085,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 2,
+              "role": "assistant",
+              "prompt_tokens": 734,
+              "gen_tokens": 59,
+              "think_tokens": 56,
+              "evicted_tokens": 0,
+              "ttft_ms": 61.0,
+              "latency_s": 0.084,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 4,
+              "role": "assistant",
+              "prompt_tokens": 1413,
+              "gen_tokens": 25,
+              "think_tokens": 22,
+              "evicted_tokens": 0,
+              "ttft_ms": 77.0,
+              "latency_s": 0.09,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            }
+          ]
+        },
+        "governor_only": {
+          "arm_id": "governor_only",
+          "arm_name": "Arm 4: Governor-Only Ablation",
+          "task_id": "circular-buffer",
+          "tier": "Tier C (Hard)",
+          "solved": true,
+          "turns_to_solve": 5,
+          "syntax_intact": true,
+          "total_prompt_tokens": 2799,
+          "total_generated_tokens": 884,
+          "total_thinking_tokens": 225,
+          "total_evicted_tokens": 0,
+          "total_wall_clock_s": 1.06,
+          "prefill_growth_ratio": 3.73,
+          "token_savings_pct": 0.0,
+          "final_pytest": {
+            "passed": 10,
+            "total": 10,
+            "exit_code": 0
+          },
+          "turns": [
+            {
+              "turn_index": 1,
+              "role": "assistant",
+              "prompt_tokens": 437,
+              "gen_tokens": 260,
+              "think_tokens": 75,
+              "evicted_tokens": 0,
+              "ttft_ms": 53.0,
+              "latency_s": 0.083,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 2,
+              "role": "assistant",
+              "prompt_tokens": 734,
+              "gen_tokens": 287,
+              "think_tokens": 75,
+              "evicted_tokens": 0,
+              "ttft_ms": 61.0,
+              "latency_s": 0.083,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            },
+            {
+              "turn_index": 4,
+              "role": "assistant",
+              "prompt_tokens": 1628,
+              "gen_tokens": 337,
+              "think_tokens": 75,
+              "evicted_tokens": 0,
+              "ttft_ms": 77.0,
+              "latency_s": 0.089,
+              "pytest_passed": null,
+              "pytest_total": null,
+              "exit_code": null
+            }
+          ]
+        }
+      }
+    }
+  },
+  "summary": {
+    "pass_rates": {
+      "vanilla": 100.0,
+      "subneutralize_full": 100.0,
+      "static_truncation": 0.0,
+      "governor_only": 100.0
+    },
+    "total_compute_saved_pct": {
+      "vanilla": 0.0,
+      "subneutralize_full": 7.0,
+      "static_truncation": 20.5,
+      "governor_only": 0.0
+    },
+    "mean_wall_latency_s": {
+      "vanilla": 1.07,
+      "subneutralize_full": 1.07,
+      "static_truncation": 1.25,
+      "governor_only": 1.07
+    },
+    "mean_prefill_growth_ratio": {
+      "vanilla": 4.26,
+      "subneutralize_full": 3.87,
+      "static_truncation": 3.54,
+      "governor_only": 4.27
+    }
+  }
+}
