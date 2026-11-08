@@ -34,4 +34,4 @@ jobs:
 
       - name: Run SubNeutralize Unit Tests
         run: |
-          python -m pytest tests/ -v --tb=short
+          python scripts/run_ci_tests.py
