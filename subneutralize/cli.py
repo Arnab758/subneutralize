@@ -1,6 +1,7 @@
 """
 Command-Line Interface (CLI) for SubNeutralize.
-Provides interactive governed generation, side-by-side comparison, and benchmarking.
+Provides interactive governed generation, Transactional Action Firewall (`up`),
+OpenAI gateway (`serve`), side-by-side comparison, and benchmarking.
 """
 
 import sys
@@ -18,8 +19,8 @@ except ImportError:
 def print_banner():
     banner = """
 ================================================================================
-  SubNeutralize: Latent Dynamical Inference Governor for Reasoning Models
-  Attractor Basin Detection | In-Flight KV-Preserving Consensus Transition
+  SubNeutralize v0.3.0: Transactional Runtime & Action Firewall for AI Agents
+  Latent Manifold Governor | SQLite Savepoints | Zero-Poisoning Memory Rewind
 ================================================================================
 """
     print(banner.strip() + "\n")
@@ -39,7 +40,6 @@ def run_prompt_comparison(model_id: str, prompt: str, device: str, max_tokens: i
     model = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs).to(device)
     governor = SubNeutralize(model, tokenizer)
 
-    # Use formatted chat prompt for both runs
     formatted_prompt = governor._format_prompt(prompt)
 
     print(f"\n[PROMPT]: {prompt}\n")
@@ -173,14 +173,14 @@ def run_aider_proxy(host: str = "127.0.0.1", port: int = 8000, extra_args: Optio
     model_name = "subneutralize-governed-model"
 
     try:
-        req = urllib.request.Request(f"http://{host}:{port}/health", headers={"User-Agent": "SubNeutralize-Aider/0.2.1"})
+        req = urllib.request.Request(f"http://{host}:{port}/health", headers={"User-Agent": "SubNeutralize-Aider/0.3.0"})
         with urllib.request.urlopen(req, timeout=2.0) as res:
             data = json.loads(res.read().decode("utf-8"))
             model_name = data.get("model", model_name)
         print(f"[OK] Connected to live SubNeutralize Gateway at http://{host}:{port} (Model: {model_name})")
     except Exception:
         print(f"[WARN] SubNeutralize Gateway not detected at http://{host}:{port}.")
-        print(f"       Tip: In another terminal, run: subneutralize serve --port {port}")
+        print(f"       Tip: In another terminal, run: subneutralize up --port {port}")
 
     aider_bin = shutil.which("aider")
     if not aider_bin:
@@ -211,21 +211,33 @@ def main():
     default_dev = "cuda" if (_HAS_TORCH and torch.cuda.is_available()) else "cpu"
     parser = argparse.ArgumentParser(
         prog="subneutralize",
-        description="SubNeutralize: Latent Dynamical Inference Governor for Reasoning Models"
+        description="SubNeutralize v0.3.0: Transactional Runtime & Action Firewall for Reasoning Models",
     )
-    parser.add_argument("--version", "-v", action="version", version="subneutralize 0.2.1")
-    parser.add_argument("command_or_prompt", nargs="?", default=None, help="'serve' to launch OpenAI gateway for Cursor/VS Code, or prompt to govern")
-    parser.add_argument("--model", type=str, default="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B", help="Model ID (default: deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B)")
+    parser.add_argument("--version", "-v", action="version", version="subneutralize 0.3.0")
+    parser.add_argument(
+        "command_or_prompt",
+        nargs="?",
+        default=None,
+        help="'up' to launch Transactional Action Firewall & Web Command Center, 'serve' to launch OpenAI gateway, or prompt to govern",
+    )
+    parser.add_argument("--model", type=str, default="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B", help="Model ID")
     parser.add_argument("--device", type=str, default=default_dev, help=f"Execution device (default: {default_dev})")
-    parser.add_argument("--host", type=str, default="127.0.0.1", help="Gateway host for serve mode (default: 127.0.0.1)")
-    parser.add_argument("--port", type=int, default=8000, help="Gateway port for serve mode (default: 8000)")
-    parser.add_argument("--serve", action="store_true", help="Launch OpenAI-compatible local proxy for Cursor / IDEs")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Gateway host for up/serve mode (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=8000, help="Gateway port for up/serve mode (default: 8000)")
+    parser.add_argument("--up", "--firewall", action="store_true", help="Launch Full-Stack Transactional Action Firewall + Web Command Center UI ($0 local mode)")
+    parser.add_argument("--demo", action="store_true", help="Run 'Try Your Own Startup App' 2-line integration demo on custom schema & repo")
+    parser.add_argument("--serve", action="store_true", help="Launch OpenAI-compatible local proxy for Cursor / IDEs with model weights")
     parser.add_argument("--top", "--monitor", action="store_true", help="Launch real-time terminal telemetry monitor")
     parser.add_argument("--compare", action="store_true", help="Run head-to-head comparison vs. unconstrained Vanilla baseline")
     parser.add_argument("--benchmark", action="store_true", help="Run verification benchmark suite")
     parser.add_argument("--interactive", "-i", action="store_true", help="Launch interactive REPL session")
 
     args = parser.parse_args()
+
+    if args.demo or (args.command_or_prompt and args.command_or_prompt.lower() == "demo"):
+        from try_your_own_app import run_startup_onboarding_demo
+        run_startup_onboarding_demo(interactive=args.interactive)
+        return
 
     if args.benchmark:
         from .benchmark import main as run_benchmark
@@ -236,6 +248,11 @@ def main():
     if args.top or (args.command_or_prompt and args.command_or_prompt.lower() in ("top", "monitor")):
         from .monitor import run_terminal_monitor
         run_terminal_monitor(host=args.host, port=args.port)
+        return
+
+    if args.up or (args.command_or_prompt and args.command_or_prompt.lower() in ("up", "firewall")):
+        from .server import start_firewall_platform
+        start_firewall_platform(host=args.host, port=args.port, load_llm=False, model_id=args.model, device=args.device)
         return
 
     if args.serve or (args.command_or_prompt and args.command_or_prompt.lower() == "serve"):

@@ -1,9 +1,10 @@
 """
-SubNeutralize: Parameter-Free Runtime Inference Governor for Reasoning Models.
+SubNeutralize: Parameter-Free Runtime Inference Governor & Transactional Action Firewall.
 
 Eliminates the 'Overthinking Crisis' in large autoregressive reasoning models
-by tracking latent representation dynamics and transitioning immediately upon
-reaching dynamical consensus equilibrium.
+by tracking latent representation dynamics, evicting multi-turn KV scratchpads,
+and enforcing ACID-style transactional staging (`BEGIN`, `STAGE`, `VALIDATE`, `COMMIT` / `ROLLBACK`)
+with Zero-Poisoning Memory Rewind for autonomous tool calls.
 """
 
 from .governor import (
@@ -24,6 +25,16 @@ from .vllm_adapter import (
     VLLMSubNeutralizeLogitsProcessor,
     VLLMMultiTurnMiddleware,
     create_vllm_sampling_params,
+)
+from .firewall import (
+    TransactionalActionFirewall,
+    FirewallPolicyConfig,
+    ActionTransactionRecord,
+    TransactionStatus,
+    ToolCategory,
+    UniversalSQLSavepointAdapter,
+    SQLiteSavepointAdapter,
+    FilesystemShadowAdapter,
 )
 
 # Legacy alias for backward compatibility
@@ -51,5 +62,13 @@ __all__ = [
     "VLLMSubNeutralizeLogitsProcessor",
     "VLLMMultiTurnMiddleware",
     "create_vllm_sampling_params",
+    "TransactionalActionFirewall",
+    "FirewallPolicyConfig",
+    "ActionTransactionRecord",
+    "TransactionStatus",
+    "ToolCategory",
+    "UniversalSQLSavepointAdapter",
+    "SQLiteSavepointAdapter",
+    "FilesystemShadowAdapter",
     "__version__",
 ]

@@ -878,11 +878,157 @@ class SubNeutralizeRuntimeEngine:
         }
 
 
+from dataclasses import asdict
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, Field
+from subneutralize.firewall import (
+    TransactionalActionFirewall,
+    FirewallPolicyConfig,
+    ActionTransactionRecord,
+    TransactionStatus,
+)
+from subneutralize.server import (
+    FirewallInterceptRequest,
+    FirewallResolveRequest,
+    FirewallChatAgentRequest,
+    MCPToolCallRequest,
+    _build_command_center_html,
+    execute_live_agent_mission,
+)
+
 app = FastAPI(
-    title="SubNeutralize v2.4 Manifold-Governed OpenAI Gateway",
-    version="2.4.0",
+    title="SubNeutralize v0.3.0 Transactional Runtime & Action Firewall Gateway",
+    version="0.3.0",
 )
 GLOBAL_ENGINE: Optional[SubNeutralizeRuntimeEngine] = None
+GLOBAL_FIREWALL = TransactionalActionFirewall()
+
+
+@app.get("/", response_class=HTMLResponse)
+@app.get("/command-center", response_class=HTMLResponse)
+def api_dashboard():
+    return _build_command_center_html(select_model_for_hardware())
+
+
+@app.get("/health")
+def api_health() -> Dict[str, Any]:
+    chain_ok, chain_len = GLOBAL_FIREWALL.verify_audit_chain_integrity()
+    return {
+        "status": "healthy",
+        "version": "0.3.0",
+        "audit_chain_verified": chain_ok,
+        "audit_records": chain_len,
+    }
+
+
+@app.get("/v1/firewall/state")
+def api_firewall_state() -> Dict[str, Any]:
+    return GLOBAL_FIREWALL.get_full_state_summary()
+
+
+@app.get("/v1/firewall/roi")
+def api_firewall_roi() -> Dict[str, Any]:
+    return GLOBAL_FIREWALL.get_roi_receipt()
+
+
+@app.post("/v1/firewall/chat-agent")
+def api_firewall_chat_agent(req: FirewallChatAgentRequest) -> Dict[str, Any]:
+    return GLOBAL_FIREWALL.run_agent_loop(
+        user_prompt=req.prompt,
+        session_id=req.session_id,
+        max_turns=req.max_turns,
+        api_key=req.api_key,
+        provider=req.provider,
+        model=req.model,
+    )
+
+
+@app.post("/v1/firewall/intercept")
+def api_firewall_intercept(req: FirewallInterceptRequest) -> Dict[str, Any]:
+    rec, updated_messages = GLOBAL_FIREWALL.intercept_and_execute(
+        session_id=req.session_id,
+        turn_index=req.turn_index,
+        tool_type=req.tool_type,
+        tool_name=req.tool_name,
+        arguments=req.arguments,
+        agent_reasoning_text=req.agent_reasoning_text,
+        messages_context=req.messages_context,
+        latent_phi=req.latent_phi,
+        latent_rho=req.latent_rho,
+    )
+    return {
+        "transaction": asdict(rec),
+        "updated_messages_context": updated_messages,
+        "metrics": GLOBAL_FIREWALL.metrics,
+        "roi_receipt": GLOBAL_FIREWALL.get_roi_receipt(),
+    }
+
+
+@app.post("/v1/firewall/resolve/{tx_id}")
+def api_firewall_resolve(tx_id: str, req: FirewallResolveRequest) -> Dict[str, Any]:
+    try:
+        rec = GLOBAL_FIREWALL.resolve_pending_transaction(tx_id, req.action)
+        return {"transaction": asdict(rec), "metrics": GLOBAL_FIREWALL.metrics, "roi_receipt": GLOBAL_FIREWALL.get_roi_receipt()}
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.post("/v1/firewall/reset")
+def api_firewall_reset() -> Dict[str, Any]:
+    GLOBAL_FIREWALL.reset_all()
+    return {"status": "reset_complete", "state": GLOBAL_FIREWALL.get_full_state_summary()}
+
+
+@app.post("/v1/firewall/agent-run")
+def api_firewall_agent_run() -> Dict[str, Any]:
+    return execute_live_agent_mission(GLOBAL_FIREWALL)
+
+
+@app.post("/v1/mcp/tools/call")
+def api_mcp_tools_call(req: MCPToolCallRequest) -> Dict[str, Any]:
+    name_lower = req.name.lower()
+    if "sql" in name_lower or "query" in name_lower or "db" in name_lower:
+        tool_type = "sql"
+    elif "file" in name_lower or "write" in name_lower or "edit" in name_lower:
+        tool_type = "filesystem"
+    elif "refund" in name_lower or "stripe" in name_lower or "pay" in name_lower or "transfer" in name_lower:
+        tool_type = "http_payment"
+    else:
+        tool_type = "shell"
+
+    rec, updated_msgs = GLOBAL_FIREWALL.intercept_and_execute(
+        session_id=req.session_id,
+        turn_index=req.turn_index,
+        tool_type=tool_type,
+        tool_name=req.name,
+        arguments=req.arguments,
+        agent_reasoning_text=req.agent_reasoning_text,
+        latent_phi=req.latent_phi,
+        latent_rho=req.latent_rho,
+    )
+    is_err = rec.status in (TransactionStatus.ROLLED_BACK, TransactionStatus.PENDING_APPROVAL)
+    return {
+        "jsonrpc": "2.0",
+        "result": {
+            "isError": is_err,
+            "transaction_id": rec.tx_id,
+            "status": rec.status,
+            "content": [
+                {
+                    "type": "text",
+                    "text": rec.execution_output if rec.status == TransactionStatus.COMMITTED else rec.policy_verdict,
+                }
+            ],
+            "subneutralize_firewall": {
+                "memory_rewound": rec.memory_rewound,
+                "tokens_pruned": rec.tokens_pruned_on_rollback,
+                "corrective_steering_prompt": rec.corrective_steering_prompt,
+                "record_hash": rec.record_hash,
+            },
+            "updated_messages": updated_msgs,
+        },
+    }
 
 
 @app.post("/v1/chat/completions")
@@ -904,8 +1050,10 @@ def api_chat_completions(req: ChatCompletionRequest) -> Dict[str, Any]:
 @app.get("/v1/telemetry")
 def api_telemetry() -> Dict[str, Any]:
     if GLOBAL_ENGINE is None:
-        return {"status": "idle"}
-    return GLOBAL_ENGINE.get_telemetry_summary()
+        return {"status": "idle", "firewall_metrics": GLOBAL_FIREWALL.metrics}
+    summary = GLOBAL_ENGINE.get_telemetry_summary()
+    summary["firewall_metrics"] = GLOBAL_FIREWALL.metrics
+    return summary
 
 
 if __name__ == "__main__":

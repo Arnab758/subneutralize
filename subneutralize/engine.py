@@ -156,6 +156,45 @@ class PhysicalCacheSlicer:
 
         return past_key_values, vram_saved_pct
 
+    @classmethod
+    def slice_kv_cache(
+        cls,
+        past_key_values: Any,
+        safe_token_length: int,
+    ) -> Tuple[Any, int]:
+        """
+        Physically truncates KV cache tensors back to exact `safe_token_length` prefix
+        when a corrupted reasoning/tool turn is rolled back by the Transactional Action Firewall.
+        Returns: (sliced_past_key_values, tokens_sliced_off)
+        """
+        seq_len = cls.get_seq_length(past_key_values)
+        if past_key_values is None or safe_token_length is None or seq_len <= safe_token_length:
+            return past_key_values, 0
+
+        keep_len = max(0, int(safe_token_length))
+        sliced_off = seq_len - keep_len
+
+        if hasattr(past_key_values, "layers"):
+            for layer in past_key_values.layers:
+                if hasattr(layer, "keys") and layer.keys is not None:
+                    layer.keys = layer.keys[:, :, :keep_len, :].contiguous()
+                if hasattr(layer, "values") and layer.values is not None:
+                    layer.values = layer.values[:, :, :keep_len, :].contiguous()
+        elif hasattr(past_key_values, "key_cache"):
+            for i in range(len(past_key_values.key_cache)):
+                past_key_values.key_cache[i] = past_key_values.key_cache[i][:, :, :keep_len, :].contiguous()
+                past_key_values.value_cache[i] = past_key_values.value_cache[i][:, :, :keep_len, :].contiguous()
+            if hasattr(past_key_values, "_seen_tokens"):
+                past_key_values._seen_tokens = keep_len
+        elif isinstance(past_key_values, (tuple, list)):
+            past_key_values = tuple(
+                (k[:, :, :keep_len, :].contiguous(), v[:, :, :keep_len, :].contiguous())
+                for k, v in past_key_values
+            )
+
+        return past_key_values, sliced_off
+
+
 
 
 def sample_next_token(logits: torch.Tensor, temperature: float = 0.6, top_p: float = 0.95) -> torch.Tensor:
