@@ -703,6 +703,11 @@ def execute_pytest_in_sandbox(
         stderr = f"Subprocess execution error: {e}"
         exit_code = 1
 
+    if isinstance(stdout, bytes):
+        stdout = stdout.decode("utf-8", errors="replace")
+    if isinstance(stderr, bytes):
+        stderr = stderr.decode("utf-8", errors="replace")
+
     # Parse pytest test counts
     passed_count = 0
     failed_count = 0

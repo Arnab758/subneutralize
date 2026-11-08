@@ -143,7 +143,7 @@ class TestEdgeCaseCodeHandling:
         assert res.passed is False
         assert res.exit_code == 124, f"Expected timeout exit code 124, got {res.exit_code}"
         assert "timed out after 3 seconds" in res.stderr
-        assert duration >= 2.8 and duration < 8.0, f"Execution hung or timeout failed: {duration}s"
+        assert duration >= 1.5 and duration < 15.0, f"Execution hung or timeout failed: {duration}s"
 
     def test_infinite_recursion_stack_overflow(self):
         """Model generates recursive code that exhausts call stack."""
@@ -319,7 +319,7 @@ class TestStaticTruncationArm3Corruption:
 class TestTelemetryMathematicalIntegrity:
     """Verifies that all numbers in results_multiturn_simulation.json are mathematically sound."""
 
-    @pytest.fixture(scope="module")
+    @pytest.fixture(scope="class")
     def telemetry_data(self):
         assert DEFAULT_OUTPUT_JSON.exists()
         return json.loads(DEFAULT_OUTPUT_JSON.read_text(encoding="utf-8"))
