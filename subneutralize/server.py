@@ -94,7 +94,7 @@ def _build_command_center_html(model_id: str) -> str:
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>SubNeutralize v0.3.0 — Transactional Runtime & Action Firewall</title>
+  <title>SubNeutralize Gateway — SubNeutralize v0.3.0 Transactional Runtime & Action Firewall</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root {{
@@ -320,7 +320,7 @@ def _build_command_center_html(model_id: str) -> str:
     <div class="header">
       <div>
         <div class="brand-title">
-          <span>🛡️ SubNeutralize v0.3.0</span>
+          <span>🛡️ SubNeutralize Gateway v0.3.0</span>
           <span class="badge badge-online">● Transactional Action Firewall Active</span>
         </div>
         <div style="color: var(--muted); font-size: 12.5px; margin-top: 4px;">

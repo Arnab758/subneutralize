@@ -47,3 +47,9 @@ step_*.txt
 # Notebooks & Colab runners
 notebooks/
 *.ipynb
+
+
+# Sandbox & demo databases
+*.db
+.subneutralize_firewall_demo.db
+.subneutralize_workspace_sandbox/

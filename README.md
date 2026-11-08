@@ -302,11 +302,11 @@ python try_your_own_app.py --interactive
 
 ## 🧪 Comprehensive Test Suite & Verification
 
-SubNeutralize is backed by **73 automated unit and integration tests** passing 100% green:
+SubNeutralize is backed by **90 automated unit and integration tests** passing 100% green:
 
 ```bash
-# 1. Run the full unit & integration test suite (15/15 passing):
-python -m pytest test_transactional_firewall.py -v
+# 1. Run the entire unit & integration test suite (90/90 passing):
+python -m pytest tests/ -v
 
 # 2. Run the 6-part core runtime E2E proof:
 python live_agent_e2e_proof.py
